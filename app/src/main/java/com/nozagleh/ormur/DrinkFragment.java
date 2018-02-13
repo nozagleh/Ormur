@@ -6,10 +6,12 @@ import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.nozagleh.ormur.Models.Drink;
 import com.nozagleh.ormur.dummy.DummyContent;
 import com.nozagleh.ormur.dummy.DummyContent.DummyItem;
 
@@ -22,6 +24,10 @@ import java.util.List;
  * interface.
  */
 public class DrinkFragment extends Fragment {
+    private static String FRAGMENT_TAG = "DrinkFragment";
+
+    private RecyclerView recyclerView;
+    private DrinkRecyclerViewAdapter drinkRecyclerViewAdapter;
 
     // TODO: Customize parameter argument names
     private static final String ARG_COLUMN_COUNT = "column-count";
@@ -53,6 +59,21 @@ public class DrinkFragment extends Fragment {
         if (getArguments() != null) {
             mColumnCount = getArguments().getInt(ARG_COLUMN_COUNT);
         }
+
+        Data data = new Data();
+        data.setupQueue(getActivity());
+        Log.d(FRAGMENT_TAG, "asdas");
+        data.getDrink(getActivity(), new Data.DataInterface() {
+            @Override
+            public void OnDataRecieved(Drink drink) {
+                drinkRecyclerViewAdapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void responseData() {
+
+            }
+        });
     }
 
     @Override
@@ -60,16 +81,18 @@ public class DrinkFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_drink_list, container, false);
 
+        drinkRecyclerViewAdapter = new DrinkRecyclerViewAdapter(DummyContent.ITEMS, mListener);
+
         // Set the adapter
         if (view instanceof RecyclerView) {
             Context context = view.getContext();
-            RecyclerView recyclerView = (RecyclerView) view;
+            recyclerView = (RecyclerView) view;
             if (mColumnCount <= 1) {
                 recyclerView.setLayoutManager(new LinearLayoutManager(context));
             } else {
                 recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
             }
-            recyclerView.setAdapter(new DrinkRecyclerViewAdapter(DummyContent.ITEMS, mListener));
+            recyclerView.setAdapter(drinkRecyclerViewAdapter);
         }
         return view;
     }
