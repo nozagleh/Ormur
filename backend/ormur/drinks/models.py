@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import json
 from django.utils import timezone
 from django.db import models
 
@@ -15,3 +16,6 @@ class Drink(models.Model):
 
 	def __str__(self):
 		return self.title
+
+	def getJSON(self):
+		return {'drink':{'title':self.title, 'rating':self.rating, 'description':self.description, 'location':self.location}}
