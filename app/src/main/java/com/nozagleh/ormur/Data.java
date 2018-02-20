@@ -11,13 +11,15 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Created by arnarfreyr on 12.2.2018.
@@ -34,14 +36,26 @@ public class Data {
        requestQueue = Volley.newRequestQueue(activity);
     }
 
-    public void makeRequest(String url, final HashMap data, Activity activity) {
+    public void makeRequest(String url, final HashMap data, Activity activity, final DataInterface callback) {
         JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST, url, new JSONObject(data), new Response.Listener<JSONObject>() {
             @Override
             public void onResponse(JSONObject response) {
                 Gson gson = new Gson();
-                Drink drink = new Drink();
-                drink = gson.fromJson(response.toString(), Drink.class);
-                dataInterface.OnDataRecieved(drink);
+                List<Drink> drinks = new ArrayList<>();
+                try {
+                    JSONArray jsonArray = response.getJSONArray("drinks");
+                    if (jsonArray != null) {
+                        for (int i = 0; i < jsonArray.length(); i++) {
+                            Drink drink = new Drink();
+                            drink = gson.fromJson(jsonArray.getString(i), Drink.class);
+                            drinks.add(drink);
+                        }
+                    }
+                } catch (JSONException e) {
+                    Log.e(CLASS_TAG, e.getMessage());
+                }
+
+                callback.OnDataRecieved(drinks);
             }
         }, new Response.ErrorListener() {
             @Override
@@ -58,14 +72,21 @@ public class Data {
             @Override
             public void onResponse(JSONObject response) {
                 Gson gson = new Gson();
-                Drink drink = new Drink();
-                Log.d(CLASS_TAG, response.toString());
+                List<Drink> drinks = new ArrayList<>();
                 try {
-                    drink = gson.fromJson(response.getJSONObject("drink").toString(), Drink.class);
-                    callback.OnDataRecieved(drink);
+                    JSONArray jsonArray = response.getJSONArray("drinks");
+                    if (jsonArray != null) {
+                        for (int i = 0; i < jsonArray.length(); i++) {
+                            JSONObject obj = jsonArray.getJSONObject(i).getJSONObject("drink");
+
+                            Drink drink = gson.fromJson(obj.toString(), Drink.class);
+                            drinks.add(drink);
+                        }
+                    }
                 } catch (JSONException e) {
                     Log.e(CLASS_TAG, e.getMessage());
                 }
+                callback.OnDataRecieved(drinks);
             }
         }, new Response.ErrorListener() {
             @Override
@@ -78,18 +99,21 @@ public class Data {
     }
 
     public void getDrink(Activity activity, DataInterface callback) {
-        Log.d(CLASS_TAG, "get drink");
         String url = ROOT_URL + "drink/get";
         this.getData(url, activity, callback);
     }
 
-    public void sendDrink(Activity activity, HashMap data) {
+    // TODO singular and multi get drink/s
+    public void getDrinks(Activity activity, DataInterface callback) {
+        this.getDrink(activity, callback);
+    }
+
+    public void sendDrink(Activity activity, HashMap data, DataInterface callback) {
         String url = ROOT_URL + "drink/add/";
-        this.makeRequest(url, data, activity);
+        this.makeRequest(url, data, activity, callback);
     }
 
     public interface DataInterface {
-        public void OnDataRecieved(Drink drink);
-        void responseData();
+        void OnDataRecieved(List<Drink> drinks);
     }
 }

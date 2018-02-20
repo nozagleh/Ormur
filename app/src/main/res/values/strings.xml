@@ -15,6 +15,17 @@
     <string name="title_add">Add</string>
     <string name="title_settings">Settings</string>
 
+    <string name="btn_next">Next</string>
+    <string name="btn_previous">Previous</string>
+    <string name="dot">&#8226;</string>
+    
+    <string name="txt_name">Name</string>
+    <string name="txt_description">Description</string>
+    <string name="txt_rating">Rating</string>
+    <string name="txt_finish">Finish</string>
+
+    <string name="txt_rating_desc">Rating can be given from <b>zero</b> to <b>five</b>\n as well as <i>.5</i> in between</string>
+
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

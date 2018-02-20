@@ -1,12 +1,14 @@
 package com.nozagleh.ormur;
 
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.nozagleh.ormur.DrinkFragment.OnListFragmentInteractionListener;
+import com.nozagleh.ormur.Models.Drink;
 import com.nozagleh.ormur.dummy.DummyContent.DummyItem;
 
 import java.util.List;
@@ -17,12 +19,13 @@ import java.util.List;
  * TODO: Replace the implementation with code for your data type.
  */
 public class DrinkRecyclerViewAdapter extends RecyclerView.Adapter<DrinkRecyclerViewAdapter.ViewHolder> {
+    private final String CLASS_TAG = "DrinkRecyclerViewA";
 
-    private final List<DummyItem> mValues;
+    private final List<Drink> mDrinks;
     private final OnListFragmentInteractionListener mListener;
 
-    public DrinkRecyclerViewAdapter(List<DummyItem> items, OnListFragmentInteractionListener listener) {
-        mValues = items;
+    public DrinkRecyclerViewAdapter(List<Drink> drinks, OnListFragmentInteractionListener listener) {
+        mDrinks = drinks;
         mListener = listener;
     }
 
@@ -35,9 +38,9 @@ public class DrinkRecyclerViewAdapter extends RecyclerView.Adapter<DrinkRecycler
 
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
-        holder.mItem = mValues.get(position);
-        holder.mIdView.setText(mValues.get(position).id);
-        holder.mContentView.setText(mValues.get(position).content);
+        holder.mItem = mDrinks.get(position);
+        holder.mIdView.setText(mDrinks.get(position).getTitle());
+        holder.mContentView.setText(mDrinks.get(position).getDescription());
 
         holder.mView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -53,25 +56,33 @@ public class DrinkRecyclerViewAdapter extends RecyclerView.Adapter<DrinkRecycler
 
     @Override
     public int getItemCount() {
-        return mValues.size();
+        return mDrinks.size();
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
+    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         public final View mView;
         public final TextView mIdView;
         public final TextView mContentView;
-        public DummyItem mItem;
+
+        public Drink mItem;
 
         public ViewHolder(View view) {
             super(view);
             mView = view;
             mIdView = (TextView) view.findViewById(R.id.id);
             mContentView = (TextView) view.findViewById(R.id.content);
+
+            itemView.setOnClickListener(this);
         }
 
         @Override
         public String toString() {
             return super.toString() + " '" + mContentView.getText() + "'";
+        }
+
+        @Override
+        public void onClick(View view) {
+
         }
     }
 }
