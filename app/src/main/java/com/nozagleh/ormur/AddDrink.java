@@ -1,12 +1,25 @@
 package com.nozagleh.ormur;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.RatingBar;
+import android.widget.SeekBar;
+import android.widget.TextView;
+import android.widget.ViewFlipper;
+
+import org.w3c.dom.Text;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -18,10 +31,25 @@ import android.view.ViewGroup;
  * create an instance of this fragment.
  */
 public class AddDrink extends Fragment {
+    private static final String FRAGMENT_TAG = "AddDrink";
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
+
+    private ViewFlipper viewFlipper;
+    private Button btnPrev;
+    private Button btnNext;
+    private List<TextView> dots;
+    private int current_dot = 0;
+
+    private TextView txtName;
+    private TextView txtDescription;
+
+    private RatingBar seekBar;
+    private TextView seekBarText;
+
+    private static final int MIN_SWIPE_DISTANCE = 400;
 
     // TODO: Rename and change types of parameters
     private String mParam1;
@@ -63,8 +91,110 @@ public class AddDrink extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_add_drink, container, false);
+
+        viewFlipper = view.findViewById(R.id.flipper_add);
+        viewFlipper.setInAnimation(view.getContext(), R.anim.slide_in_right);
+        viewFlipper.setOutAnimation(view.getContext(), R.anim.slide_out_left);
+
+        dots = new ArrayList<>();
+        TextView dot1 = view.findViewById(R.id.dot1);
+        dots.add(dot1);
+        TextView dot2 = view.findViewById(R.id.dot2);
+        dots.add(dot2);
+
+        btnPrev = view.findViewById(R.id.btn_prev);
+        btnNext = view.findViewById(R.id.btn_next);
+
+        final TextView currentDot = dots.get(current_dot);
+        currentDot.setTextColor(view.getResources().getColor(R.color.colorAccent));
+
+        if (viewFlipper.getDisplayedChild() == 0) {
+            btnPrev.setVisibility(View.INVISIBLE);
+        }
+
+        btnPrev.setOnClickListener(onPreviousClick());
+        btnNext.setOnClickListener(onNextClick());
+
+        seekBar = view.findViewById(R.id.seekBar);
+
+
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_add_drink, container, false);
+        return view;
+    }
+
+    private Button.OnClickListener onPreviousClick() {
+        return new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                viewFlipper.setInAnimation(view.getContext(), android.R.anim.slide_in_left);
+                viewFlipper.setOutAnimation(view.getContext(), android.R.anim.slide_out_right);
+                viewFlipper.showPrevious();
+
+                changeDot(viewFlipper.getDisplayedChild());
+
+                if ( current_dot > 0 ) {
+                    btnPrev.setVisibility(View.VISIBLE);
+                } else {
+                    btnPrev.setVisibility(View.INVISIBLE);
+                }
+
+                if ( current_dot >= dots.size() - 1 ) {
+                    btnNext.setVisibility(View.INVISIBLE);
+                } else {
+                    btnNext.setVisibility(View.VISIBLE);
+                    btnNext.setText(getResources().getText(R.string.btn_next));
+                    btnNext.setOnClickListener(onNextClick());
+                }
+            }
+        };
+    }
+
+    private Button.OnClickListener onNextClick() {
+        return new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                viewFlipper.setInAnimation(view.getContext(), R.anim.slide_in_right);
+                viewFlipper.setOutAnimation(view.getContext(), R.anim.slide_out_left);
+                viewFlipper.showNext();
+                changeDot(viewFlipper.getDisplayedChild());
+                Log.d(FRAGMENT_TAG, String.valueOf(current_dot));
+                Log.d(FRAGMENT_TAG, String.valueOf(dots.size()));
+                if ( current_dot >= dots.size() - 1 ) {
+                    //btnNext.setVisibility(View.INVISIBLE);
+                    btnNext.setText(getResources().getText(R.string.txt_finish));
+                    btnNext.setOnClickListener(onFinishListener());
+
+                } else {
+                    btnNext.setVisibility(View.VISIBLE);
+                }
+
+                if ( current_dot > 0 ) {
+                    btnPrev.setVisibility(View.VISIBLE);
+                } else {
+                    btnPrev.setVisibility(View.INVISIBLE);
+                }
+            }
+        };
+    }
+
+    private Button.OnClickListener onFinishListener () {
+        return new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+            }
+        };
+    }
+
+    public void changeDot(int index) {
+        TextView oldDot = dots.get(current_dot);
+        TextView newDot = dots.get(index);
+
+        oldDot.setTextColor(getResources().getColor(R.color.colorPrimary));
+        newDot.setTextColor(getResources().getColor(R.color.colorAccent));
+
+        current_dot = index;
     }
 
     // TODO: Rename method, update argument and hook method into UI event
