@@ -6,12 +6,8 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
-import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.TextView;
 
-import com.nozagleh.ormur.dummy.DummyContent;
 import com.nozagleh.ormur.Models.Drink;
 
 public class App extends AppCompatActivity implements DrinkFragment.OnListFragmentInteractionListener, AddDrink.OnFragmentInteractionListener {
@@ -75,7 +71,7 @@ public class App extends AppCompatActivity implements DrinkFragment.OnListFragme
     }
 
     @Override
-    public void onListFragmentInteraction(DummyContent.DummyItem item) {
+    public void onListFragmentInteraction(Drink item) {
 
     }
 
