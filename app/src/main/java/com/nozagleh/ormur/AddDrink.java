@@ -11,6 +11,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.RatingBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -34,8 +35,10 @@ public class AddDrink extends Fragment {
     private static final String FRAGMENT_TAG = "AddDrink";
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+    private static final String DRINK_NAME = "drinkName";
+    private static final String DRINK_DESC = "drinkDesc";
+    private static final String DRINK_RATING = "drinkRating";
+    private static final String DRINK_EDIT = "drinkEdit";
 
     private ViewFlipper viewFlipper;
     private Button btnPrev;
@@ -43,17 +46,17 @@ public class AddDrink extends Fragment {
     private List<TextView> dots;
     private int current_dot = 0;
 
-    private TextView txtName;
-    private TextView txtDescription;
+    private EditText txtName;
+    private EditText txtDescription;
 
     private RatingBar seekBar;
     private TextView seekBarText;
 
-    private static final int MIN_SWIPE_DISTANCE = 400;
-
     // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+    private String drinkName;
+    private String drinkDesc;
+    private Float drinkRating;
+    private Boolean isEdit = false;
 
     private OnFragmentInteractionListener mListener;
 
@@ -65,16 +68,17 @@ public class AddDrink extends Fragment {
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
      *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
+     * @param name Parameter 1.
+     * @param description Parameter 2.
      * @return A new instance of fragment AddDrink.
      */
     // TODO: Rename and change types and number of parameters
-    public static AddDrink newInstance(String param1, String param2) {
+    public static AddDrink newInstance(String name, String description) {
         AddDrink fragment = new AddDrink();
         Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
+        args.putString(DRINK_NAME, name);
+        args.putString(DRINK_DESC, description);
+        args.putBoolean(DRINK_EDIT, true);
         fragment.setArguments(args);
         return fragment;
     }
@@ -82,9 +86,16 @@ public class AddDrink extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (savedInstanceState != null) {
+            drinkName = savedInstanceState.getString(DRINK_NAME);
+            drinkDesc = savedInstanceState.getString(DRINK_DESC);
+        }
+
         if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
+            drinkName = getArguments().getString(DRINK_NAME);
+            drinkDesc = getArguments().getString(DRINK_DESC);
+            isEdit = getArguments().getBoolean(DRINK_EDIT);
         }
     }
 
@@ -96,6 +107,12 @@ public class AddDrink extends Fragment {
         viewFlipper = view.findViewById(R.id.flipper_add);
         viewFlipper.setInAnimation(view.getContext(), R.anim.slide_in_right);
         viewFlipper.setOutAnimation(view.getContext(), R.anim.slide_out_left);
+
+        txtName = view.findViewById(R.id.txtName);
+        txtDescription = view.findViewById(R.id.txtDesc);
+
+        txtName.setText(drinkName);
+        txtDescription.setText(drinkDesc);
 
         dots = new ArrayList<>();
         TextView dot1 = view.findViewById(R.id.dot1);
@@ -117,10 +134,20 @@ public class AddDrink extends Fragment {
         btnNext.setOnClickListener(onNextClick());
 
         seekBar = view.findViewById(R.id.seekBar);
-
+        seekBar.setRating((float)2.5);
 
         // Inflate the layout for this fragment
         return view;
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        if (!isEdit) {
+            outState.putString(DRINK_NAME, txtName.getText().toString());
+            outState.putString(DRINK_DESC, txtDescription.getText().toString());
+        }
+
+        super.onSaveInstanceState(outState);
     }
 
     private Button.OnClickListener onPreviousClick() {

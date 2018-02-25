@@ -50,6 +50,7 @@ public class DrinkRecyclerViewAdapter extends RecyclerView.Adapter<DrinkRecycler
                     // fragment is attached to one) that an item has been selected.
                     mListener.onListFragmentInteraction(holder.mItem);
                 }
+                Log.d(CLASS_TAG, "clicked holder");
             }
         });
     }
@@ -82,7 +83,7 @@ public class DrinkRecyclerViewAdapter extends RecyclerView.Adapter<DrinkRecycler
 
         @Override
         public void onClick(View view) {
-
+            Log.d(CLASS_TAG, "clicked");
         }
     }
 }

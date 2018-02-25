@@ -36,6 +36,7 @@ public class DrinkFragment extends Fragment {
 
     // TODO: Customize parameter argument names
     private static final String ARG_COLUMN_COUNT = "column-count";
+
     // TODO: Customize parameters
     private int mColumnCount = 1;
     private OnListFragmentInteractionListener mListener;
@@ -105,6 +106,7 @@ public class DrinkFragment extends Fragment {
             @Override
             public void OnDataRecieved(List<Drink> drinks) {
                 drinkList = drinks;
+                Log.d(FRAGMENT_TAG,String.valueOf(drinks.size()));
                 if (!adapterConnected) {
                     drinkRecyclerViewAdapter = new DrinkRecyclerViewAdapter(drinkList , mListener);
 
@@ -123,6 +125,16 @@ public class DrinkFragment extends Fragment {
                 Log.d(FRAGMENT_TAG, String.valueOf(drinkList.size()));
                 drinkRecyclerViewAdapter.notifyDataSetChanged();
                 //drinkRecyclerViewAdapter.notifyItemChanged(0, drinkList.size());
+            }
+
+            @Override
+            public void OnUserReceived(String userKey) {
+
+            }
+
+            @Override
+            public void OnError(Exception exception) {
+
             }
         });
     }
