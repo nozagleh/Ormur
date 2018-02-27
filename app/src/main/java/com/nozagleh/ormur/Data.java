@@ -32,7 +32,7 @@ public class Data {
 
     DataInterface dataInterface;
     public RequestQueue requestQueue;
-    private static String ROOT_URL = "http://192.168.1.22:8000/";
+    private static String ROOT_URL = "http://192.168.1.21:8000/";
 
     private static String TYPE_DRINK = "drink";
     private static String TYPE_USER = "user";
