@@ -5,6 +5,7 @@ package com.nozagleh.ormur.Models;
  */
 
 public class Drink {
+    private int id;
     private String title;
     private Float rating;
     private String description;
@@ -13,11 +14,20 @@ public class Drink {
     public Drink() {
     }
 
-    public Drink(String title, Float rating, String description, String location) {
+    public Drink(int id, String title, Float rating, String description, String location) {
+        this.id = id;
         this.title = title;
         this.rating = rating;
         this.description = description;
         this.location = location;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String getTitle() {

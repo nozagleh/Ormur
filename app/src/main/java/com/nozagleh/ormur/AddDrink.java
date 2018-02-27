@@ -17,6 +17,8 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.ViewFlipper;
 
+import com.nozagleh.ormur.Models.Drink;
+
 import org.w3c.dom.Text;
 
 import java.util.ArrayList;
@@ -35,6 +37,7 @@ public class AddDrink extends Fragment {
     private static final String FRAGMENT_TAG = "AddDrink";
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
+    private static final String DRINK_ID = "drinkId";
     private static final String DRINK_NAME = "drinkName";
     private static final String DRINK_DESC = "drinkDesc";
     private static final String DRINK_RATING = "drinkRating";
@@ -53,6 +56,7 @@ public class AddDrink extends Fragment {
     private TextView seekBarText;
 
     // TODO: Rename and change types of parameters
+    private int drinkId;
     private String drinkName;
     private String drinkDesc;
     private Float drinkRating;
@@ -68,16 +72,17 @@ public class AddDrink extends Fragment {
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
      *
-     * @param name Parameter 1.
-     * @param description Parameter 2.
+     * @param drink Parameter 1.
      * @return A new instance of fragment AddDrink.
      */
     // TODO: Rename and change types and number of parameters
-    public static AddDrink newInstance(String name, String description) {
+    public static AddDrink newInstance(Drink drink) {
         AddDrink fragment = new AddDrink();
         Bundle args = new Bundle();
-        args.putString(DRINK_NAME, name);
-        args.putString(DRINK_DESC, description);
+        args.putInt(DRINK_ID, drink.getId());
+        args.putString(DRINK_NAME, drink.getTitle());
+        args.putString(DRINK_DESC, drink.getDescription());
+        args.putFloat(DRINK_RATING, drink.getRating());
         args.putBoolean(DRINK_EDIT, true);
         fragment.setArguments(args);
         return fragment;
@@ -93,8 +98,10 @@ public class AddDrink extends Fragment {
         }
 
         if (getArguments() != null) {
+            drinkId = getArguments().getInt(DRINK_ID);
             drinkName = getArguments().getString(DRINK_NAME);
             drinkDesc = getArguments().getString(DRINK_DESC);
+            drinkRating = getArguments().getFloat(DRINK_RATING);
             isEdit = getArguments().getBoolean(DRINK_EDIT);
         }
     }
@@ -107,6 +114,10 @@ public class AddDrink extends Fragment {
         viewFlipper = view.findViewById(R.id.flipper_add);
         viewFlipper.setInAnimation(view.getContext(), R.anim.slide_in_right);
         viewFlipper.setOutAnimation(view.getContext(), R.anim.slide_out_left);
+
+        if (isEdit) {
+            mListener.addDrinkEditDrink();
+        }
 
         txtName = view.findViewById(R.id.txtName);
         txtDescription = view.findViewById(R.id.txtDesc);
@@ -134,8 +145,9 @@ public class AddDrink extends Fragment {
         btnNext.setOnClickListener(onNextClick());
 
         seekBar = view.findViewById(R.id.seekBar);
-        seekBar.setRating((float)2.5);
-
+        if (drinkRating != null) {
+            seekBar.setRating(drinkRating);
+        }
         // Inflate the layout for this fragment
         return view;
     }
@@ -224,13 +236,6 @@ public class AddDrink extends Fragment {
         current_dot = index;
     }
 
-    // TODO: Rename method, update argument and hook method into UI event
-    public void onButtonPressed(Uri uri) {
-        if (mListener != null) {
-            mListener.onFragmentInteraction(uri);
-        }
-    }
-
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
@@ -260,6 +265,6 @@ public class AddDrink extends Fragment {
      */
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
-        void onFragmentInteraction(Uri uri);
+        void addDrinkEditDrink();
     }
 }

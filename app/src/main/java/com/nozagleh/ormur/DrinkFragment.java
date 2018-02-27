@@ -81,6 +81,8 @@ public class DrinkFragment extends Fragment {
                              Bundle savedInstanceState) {
         view = inflater.inflate(R.layout.fragment_drink_list, container, false);
 
+        mListener.setAppBarSearch();
+
         bindSwipeRefresh();
 
         refreshList();
@@ -169,5 +171,6 @@ public class DrinkFragment extends Fragment {
     public interface OnListFragmentInteractionListener {
         // TODO: Update argument type and name
         void onListFragmentInteraction(Drink item);
+        void setAppBarSearch();
     }
 }

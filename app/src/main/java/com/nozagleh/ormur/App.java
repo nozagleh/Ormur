@@ -9,6 +9,8 @@ import android.support.design.widget.BottomNavigationView;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 
 import com.nozagleh.ormur.Models.Drink;
@@ -26,13 +28,39 @@ public class App extends AppCompatActivity implements DrinkFragment.OnListFragme
 
     private SharedPreferences sharedPreferences;
 
+    private Toolbar toolbar;
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.bar, menu);
+        return true;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_app);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolBar);
+        toolbar = (Toolbar) findViewById(R.id.toolBar);
         setSupportActionBar(toolbar);
+
+        toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                switch (item.toString()) {
+                    case "Search":
+                        // TODO add search
+                        Log.d(ACTIVITY_TAG, "search");
+                        return true;
+                    case "Delete":
+                        // TODO add delete action
+                        Log.d(ACTIVITY_TAG, "delete");
+                        return true;
+                }
+
+                return false;
+            }
+        });
 
         addDrinkFragment = new AddDrink();
         drinkListFragment = new DrinkFragment();
@@ -64,14 +92,10 @@ public class App extends AppCompatActivity implements DrinkFragment.OnListFragme
             });
         }
 
-        Log.d(ACTIVITY_TAG, sharedPreferences.getString(USER_KEY,""));
-
         if (findViewById(R.id.content) != null) {
-
             if (savedInstanceState != null) {
                 return;
             }
-
             getSupportFragmentManager().beginTransaction().add(R.id.content, drinkListFragment).commit();
         }
 
@@ -113,12 +137,19 @@ public class App extends AppCompatActivity implements DrinkFragment.OnListFragme
 
     @Override
     public void onListFragmentInteraction(Drink item) {
-        AddDrink addDrink = AddDrink.newInstance(item.getTitle(), item.getDescription());
+        AddDrink addDrink = AddDrink.newInstance(item);
         getSupportFragmentManager().beginTransaction().replace(R.id.content, addDrink).addToBackStack(null).commit();
     }
 
     @Override
-    public void onFragmentInteraction(Uri uri) {
+    public void setAppBarSearch() {
+        toolbar.getMenu().clear();
+        getMenuInflater().inflate(R.menu.bar, toolbar.getMenu());
+    }
 
+    @Override
+    public void addDrinkEditDrink() {
+        toolbar.getMenu().clear();
+        getMenuInflater().inflate(R.menu.bar_delete, toolbar.getMenu());
     }
 }
