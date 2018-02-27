@@ -17,19 +17,19 @@
             android:layout_height="match_parent">
 
             <TextView
-                android:id="@+id/textView2"
+                android:id="@+id/txtNameLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentTop="true"
-                android:layout_alignStart="@+id/editText2"
+                android:layout_alignStart="@+id/txtName"
                 android:layout_marginTop="80dp"
                 android:text="@string/txt_name" />
 
             <EditText
-                android:id="@+id/editText2"
+                android:id="@+id/txtName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_below="@+id/textView2"
+                android:layout_below="@+id/txtNameLabel"
                 android:layout_centerHorizontal="true"
                 android:layout_marginTop="5dp"
                 android:layout_marginStart="40dp"
@@ -39,19 +39,19 @@
                 android:inputType="textPersonName|textFilter|textNoSuggestions" />
 
             <TextView
-                android:id="@+id/textView3"
+                android:id="@+id/txtDescLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_below="@id/editText2"
-                android:layout_alignStart="@+id/editText3"
+                android:layout_below="@id/txtName"
+                android:layout_alignStart="@+id/txtDesc"
                 android:layout_marginTop="20dp"
                 android:text="@string/txt_description" />
 
             <EditText
-                android:id="@+id/editText3"
+                android:id="@+id/txtDesc"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_below="@id/textView3"
+                android:layout_below="@id/txtDescLabel"
                 android:layout_centerHorizontal="true"
                 android:layout_marginTop="5dp"
                 android:layout_marginStart="40dp"

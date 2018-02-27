@@ -1,9 +1,11 @@
 package com.nozagleh.ormur;
 
 import android.app.Activity;
+import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.nozagleh.ormur.Models.Drink;
 
 import com.android.volley.Request;
@@ -32,88 +34,74 @@ public class Data {
     public RequestQueue requestQueue;
     private static String ROOT_URL = "http://192.168.1.22:8000/";
 
+    private static String TYPE_DRINK = "drink";
+    private static String TYPE_USER = "user";
+
     public void setupQueue(Activity activity) {
        requestQueue = Volley.newRequestQueue(activity);
     }
 
-    public void makeRequest(String url, final HashMap data, Activity activity, final DataInterface callback) {
-        JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST, url, new JSONObject(data), new Response.Listener<JSONObject>() {
+    public void getData(String url, final DataInterface callback, int method) {
+        JsonObjectRequest request = new JsonObjectRequest(method, url,null, new Response.Listener<JSONObject>() {
             @Override
             public void onResponse(JSONObject response) {
-                Gson gson = new Gson();
-                List<Drink> drinks = new ArrayList<>();
                 try {
-                    JSONArray jsonArray = response.getJSONArray("drinks");
-                    if (jsonArray != null) {
-                        for (int i = 0; i < jsonArray.length(); i++) {
-                            Drink drink = new Drink();
-                            drink = gson.fromJson(jsonArray.getString(i), Drink.class);
-                            drinks.add(drink);
-                        }
+                    String type = response.get("type").toString();
+
+                    if (type.equals(TYPE_DRINK)) {
+                        callback.OnDataRecieved(convertToDrinks(response));
+                    } else if(type.equals(TYPE_USER)) {
+                        callback.OnUserReceived(response.getString("key"));
                     }
                 } catch (JSONException e) {
-                    Log.e(CLASS_TAG, e.getMessage());
+                    callback.OnError(e);
                 }
-
-                callback.OnDataRecieved(drinks);
             }
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-
+                callback.OnError(error);
             }
         });
 
         this.requestQueue.add(request);
     }
 
-    public void getData(String url, Activity activity, final DataInterface callback) {
-        JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url,null, new Response.Listener<JSONObject>() {
-            @Override
-            public void onResponse(JSONObject response) {
-                Gson gson = new Gson();
-                List<Drink> drinks = new ArrayList<>();
-                try {
-                    JSONArray jsonArray = response.getJSONArray("drinks");
-                    if (jsonArray != null) {
-                        for (int i = 0; i < jsonArray.length(); i++) {
-                            JSONObject obj = jsonArray.getJSONObject(i).getJSONObject("drink");
+    private List<Drink> convertToDrinks(JSONObject json) {
+        Gson gson = new Gson();
+        List<Drink> drinks = new ArrayList<>();
+        try {
+            JSONArray jsonArray = json.getJSONArray("drinks");
+            if (jsonArray != null) {
+                for (int i = 0; i < jsonArray.length(); i++) {
+                    JSONObject obj = jsonArray.getJSONObject(i).getJSONObject("drink");
 
-                            Drink drink = gson.fromJson(obj.toString(), Drink.class);
-                            drinks.add(drink);
-                        }
-                    }
-                } catch (JSONException e) {
-                    Log.e(CLASS_TAG, e.getMessage());
+                    Drink drink = gson.fromJson(obj.toString(), Drink.class);
+                    drinks.add(drink);
                 }
-                callback.OnDataRecieved(drinks);
             }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
+        } catch (JSONException e) {
+            Log.e(CLASS_TAG, e.getMessage());
+        }
 
-            }
-        });
-
-        this.requestQueue.add(request);
+        return drinks;
     }
 
     public void getDrink(Activity activity, DataInterface callback) {
-        String url = ROOT_URL + "drink/get";
-        this.getData(url, activity, callback);
+        SharedPreferences sharedPreferences = activity.getSharedPreferences(App.STORAGE,0);
+
+        String url = ROOT_URL + "drink/get/" + sharedPreferences.getString(App.USER_KEY, "") + "/";
+        this.getData(url, callback, Request.Method.GET);
     }
 
-    // TODO singular and multi get drink/s
-    public void getDrinks(Activity activity, DataInterface callback) {
-        this.getDrink(activity, callback);
-    }
-
-    public void sendDrink(Activity activity, HashMap data, DataInterface callback) {
-        String url = ROOT_URL + "drink/add/";
-        this.makeRequest(url, data, activity, callback);
+    public void addUser(DataInterface callback) {
+        String url = ROOT_URL + "user/add";
+        this.getData(url, callback, Request.Method.POST);
     }
 
     public interface DataInterface {
         void OnDataRecieved(List<Drink> drinks);
+        void OnUserReceived(String userKey);
+        void OnError(Exception exception);
     }
 }

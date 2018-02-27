@@ -27,7 +27,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = [
     '127.0.0.1',
-    '192.168.1.22'
+    '192.168.1.22',
+    '192.168.1.21'
 ]
 
 
@@ -40,7 +41,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'drinks.apps.DrinksConfig'
+    'drinks.apps.DrinksConfig',
+    'users.apps.UsersConfig'
 ]
 
 MIDDLEWARE = [

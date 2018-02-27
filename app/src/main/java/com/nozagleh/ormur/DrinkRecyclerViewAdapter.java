@@ -42,14 +42,17 @@ public class DrinkRecyclerViewAdapter extends RecyclerView.Adapter<DrinkRecycler
         holder.mIdView.setText(mDrinks.get(position).getTitle());
         holder.mContentView.setText(mDrinks.get(position).getDescription());
 
-        holder.mView.setOnClickListener(new View.OnClickListener() {
+        holder.mView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
-            public void onClick(View v) {
+            public boolean onLongClick(View view) {
                 if (null != mListener) {
                     // Notify the active callbacks interface (the activity, if the
                     // fragment is attached to one) that an item has been selected.
                     mListener.onListFragmentInteraction(holder.mItem);
+
+                    return true;
                 }
+                return false;
             }
         });
     }
@@ -59,7 +62,7 @@ public class DrinkRecyclerViewAdapter extends RecyclerView.Adapter<DrinkRecycler
         return mDrinks.size();
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+    public class ViewHolder extends RecyclerView.ViewHolder {
         public final View mView;
         public final TextView mIdView;
         public final TextView mContentView;
@@ -71,18 +74,11 @@ public class DrinkRecyclerViewAdapter extends RecyclerView.Adapter<DrinkRecycler
             mView = view;
             mIdView = (TextView) view.findViewById(R.id.id);
             mContentView = (TextView) view.findViewById(R.id.content);
-
-            itemView.setOnClickListener(this);
         }
 
         @Override
         public String toString() {
             return super.toString() + " '" + mContentView.getText() + "'";
-        }
-
-        @Override
-        public void onClick(View view) {
-
         }
     }
 }
