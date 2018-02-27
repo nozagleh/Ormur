@@ -22,4 +22,4 @@ class Drink(models.Model):
 		return self.title
 
 	def getJSON(self):
-		return {'drink':{'title':self.title, 'rating':self.rating, 'description':self.description, 'location':self.location}}
+		return {'drink':{'id':self.id, 'title':self.title, 'rating':self.rating, 'description':self.description, 'location':self.location}}

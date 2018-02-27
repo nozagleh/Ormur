@@ -21,7 +21,7 @@ def getAllJSON(request, key):
 
 	dJson = {'type': 'drink','drinks':[]}
 	drinks = list(Drink.objects.all().filter(user=user.id))
-	print drinks
+
 	for drink in drinks :
 		dJson['drinks'].append(drink.getJSON())
 	
