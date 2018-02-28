@@ -1,25 +1,22 @@
 package com.nozagleh.ormur;
 
 import android.content.Context;
-import android.content.res.Resources;
-import android.net.Uri;
+import android.location.Location;
 import android.os.Bundle;
+import android.support.design.widget.BaseTransientBottomBar;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RatingBar;
-import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.ViewFlipper;
 
 import com.nozagleh.ormur.Models.Drink;
-
-import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,6 +61,8 @@ public class AddDrink extends Fragment {
 
     private OnFragmentInteractionListener mListener;
 
+    private Data data;
+
     public AddDrink() {
         // Required empty public constructor
     }
@@ -98,7 +97,7 @@ public class AddDrink extends Fragment {
         }
 
         if (getArguments() != null) {
-            drinkId = getArguments().getInt(DRINK_ID);
+            drinkId = getArguments().getInt(DRINK_ID,-1);
             drinkName = getArguments().getString(DRINK_NAME);
             drinkDesc = getArguments().getString(DRINK_DESC);
             drinkRating = getArguments().getFloat(DRINK_RATING);
@@ -197,13 +196,9 @@ public class AddDrink extends Fragment {
                 viewFlipper.setOutAnimation(view.getContext(), R.anim.slide_out_left);
                 viewFlipper.showNext();
                 changeDot(viewFlipper.getDisplayedChild());
-                Log.d(FRAGMENT_TAG, String.valueOf(current_dot));
-                Log.d(FRAGMENT_TAG, String.valueOf(dots.size()));
                 if ( current_dot >= dots.size() - 1 ) {
-                    //btnNext.setVisibility(View.INVISIBLE);
                     btnNext.setText(getResources().getText(R.string.txt_finish));
                     btnNext.setOnClickListener(onFinishListener());
-
                 } else {
                     btnNext.setVisibility(View.VISIBLE);
                 }
@@ -221,7 +216,56 @@ public class AddDrink extends Fragment {
         return new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                // Establish a new data class
+                Data data = new Data();
+                data.setupQueue(getActivity());
 
+                Location location = Locator.getLocation(getActivity());
+
+                Log.d(FRAGMENT_TAG, location.toString());
+                String locationString = String.valueOf(location.getLatitude()) + ", " + String.valueOf(location.getLongitude());
+
+                // Create a drink from the available information
+                Drink drink = new Drink();
+                Log.d(FRAGMENT_TAG, String.valueOf(drinkId));
+                if (drinkId != -1) {
+                    drink.setId(drinkId);
+                }
+                drink.setTitle(txtName.getText().toString());
+                drink.setDescription(txtDescription.getText().toString());
+                drink.setRating(seekBar.getRating());
+                drink.setLocation(locationString);
+
+                // Send the drink to the backend
+                data.addDrink(new Data.DataInterface() {
+                    @Override
+                    public void OnDataRecieved(List<Drink> drinks) {
+                        // Not used
+                    }
+
+                    @Override
+                    public void OnUserReceived(String userKey) {
+                        // Not used
+                    }
+
+                    @Override
+                    public void OnError(Exception exception) {
+                        Log.d(FRAGMENT_TAG, exception.getMessage());
+                    }
+
+                    @Override
+                    public void OnAdd(Boolean isSuccessful) {
+                        if (isSuccessful) {
+                            Snackbar snackbar = Snackbar.make(getActivity().findViewById(R.id.appCoordinator), "asdas", Snackbar.LENGTH_SHORT);
+                            snackbar.show();
+
+                            mListener.doneAddingDrink();
+                        } else {
+
+                        }
+
+                    }
+                }, getActivity(), drink);
             }
         };
     }
@@ -266,5 +310,6 @@ public class AddDrink extends Fragment {
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
         void addDrinkEditDrink();
+        void doneAddingDrink();
     }
 }

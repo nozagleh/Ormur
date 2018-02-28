@@ -124,9 +124,7 @@ public class DrinkFragment extends Fragment {
                         recyclerView.setAdapter(drinkRecyclerViewAdapter);
                     }
                 }
-                Log.d(FRAGMENT_TAG, String.valueOf(drinkList.size()));
                 drinkRecyclerViewAdapter.notifyDataSetChanged();
-                //drinkRecyclerViewAdapter.notifyItemChanged(0, drinkList.size());
             }
 
             @Override
@@ -136,6 +134,11 @@ public class DrinkFragment extends Fragment {
 
             @Override
             public void OnError(Exception exception) {
+
+            }
+
+            @Override
+            public void OnAdd(Boolean isSuccessful) {
 
             }
         });

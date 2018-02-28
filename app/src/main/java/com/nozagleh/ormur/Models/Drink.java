@@ -12,6 +12,7 @@ public class Drink {
     private String location;
 
     public Drink() {
+        this.id = -1;
     }
 
     public Drink(int id, String title, Float rating, String description, String location) {

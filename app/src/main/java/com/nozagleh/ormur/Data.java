@@ -67,6 +67,45 @@ public class Data {
         this.requestQueue.add(request);
     }
 
+    public void addDrink(final DataInterface callback, Activity activity, Drink drink) {
+        SharedPreferences sharedPreferences = activity.getSharedPreferences(App.STORAGE,0);
+
+        String url = ROOT_URL + "drink/add/" + sharedPreferences.getString(App.USER_KEY, "") + "/";;
+        try {
+            JSONObject drinkObject = new JSONObject();
+            if (drink.getId() != -1) {
+                drinkObject.put("id", drink.getId());
+            }
+            drinkObject.put("title",drink.getTitle());
+            drinkObject.put("description", drink.getDescription());
+            drinkObject.put("location", drink.getLocation());
+            drinkObject.put("rating", drink.getRating());
+
+            Log.d(CLASS_TAG, drinkObject.toString());
+
+            JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST, url, drinkObject, new Response.Listener<JSONObject>() {
+                @Override
+                public void onResponse(JSONObject response) {
+                    try {
+                        callback.OnAdd(response.getBoolean("success"));
+                    } catch(JSONException e) {
+                        callback.OnError(e);
+                    }
+                }
+            }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    callback.OnError(error);
+                }
+            });
+
+            this.requestQueue.add(request);
+        } catch (JSONException e) {
+            callback.OnError(e);
+            Log.e(CLASS_TAG, e.getMessage());
+        }
+    }
+
     private List<Drink> convertToDrinks(JSONObject json) {
         Gson gson = new Gson();
         List<Drink> drinks = new ArrayList<>();
@@ -103,5 +142,6 @@ public class Data {
         void OnDataRecieved(List<Drink> drinks);
         void OnUserReceived(String userKey);
         void OnError(Exception exception);
+        void OnAdd(Boolean isSuccessful);
     }
 }
