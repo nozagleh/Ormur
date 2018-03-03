@@ -27,6 +27,7 @@ import java.util.List;
  * Created by arnarfreyr on 12.2.2018.
  */
 
+@Deprecated
 public class Data {
     private static String CLASS_TAG = "Data";
 
@@ -67,7 +68,7 @@ public class Data {
         this.requestQueue.add(request);
     }
 
-    public void addDrink(final DataInterface callback, Activity activity, Drink drink) {
+    /*public void addDrink(final DataInterface callback, Activity activity, Drink drink) {
         SharedPreferences sharedPreferences = activity.getSharedPreferences(App.STORAGE,0);
 
         String url = ROOT_URL + "drink/add/" + sharedPreferences.getString(App.USER_KEY, "") + "/";;
@@ -104,7 +105,7 @@ public class Data {
             callback.OnError(e);
             Log.e(CLASS_TAG, e.getMessage());
         }
-    }
+    }*/
 
     private List<Drink> convertToDrinks(JSONObject json) {
         Gson gson = new Gson();

@@ -4,6 +4,7 @@ package com.nozagleh.ormur.Models;
  * Created by arnarfreyr on 21/02/2018.
  */
 
+@Deprecated
 public class User {
     private String firstName;
     private String lastName;

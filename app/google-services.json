@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "623679505493",
+    "firebase_url": "https://ormur-9b626.firebaseio.com",
+    "project_id": "ormur-9b626",
+    "storage_bucket": "ormur-9b626.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:623679505493:android:48bda21443349839",
+        "android_client_info": {
+          "package_name": "com.nozagleh.ormur"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "623679505493-cpoh74d5l0e0k46bpes8f9792uvqtc6l.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.nozagleh.ormur",
+            "certificate_hash": "cdbf6d2a1a496ca2ae59b283b6c420bf41166cc6"
+          }
+        },
+        {
+          "client_id": "623679505493-261gng2tn8ff30kqc4tqo3ml3bm5uf1b.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAlnMQKlx4wL9ocHUeRdb98hQv92SqbQec"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "623679505493-261gng2tn8ff30kqc4tqo3ml3bm5uf1b.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
