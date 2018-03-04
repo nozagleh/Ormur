@@ -2,7 +2,9 @@ package com.nozagleh.ormur;
 
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -18,6 +20,8 @@ import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.nozagleh.ormur.DrinkFragment.OnListFragmentInteractionListener;
 import com.nozagleh.ormur.Models.Drink;
 import com.nozagleh.ormur.dummy.DummyContent.DummyItem;
@@ -34,7 +38,7 @@ public class DrinkRecyclerViewAdapter extends RecyclerView.Adapter<DrinkRecycler
 
     private final List<Drink> mDrinks;
     private final OnListFragmentInteractionListener mListener;
-    private GoogleMap map;
+    //private GoogleMap map;
 
     public DrinkRecyclerViewAdapter(List<Drink> drinks, OnListFragmentInteractionListener listener) {
         mDrinks = drinks;
@@ -55,9 +59,26 @@ public class DrinkRecyclerViewAdapter extends RecyclerView.Adapter<DrinkRecycler
         holder.mContentView.setText(mDrinks.get(position).getDescription());
         holder.mRating.setText(String.valueOf(mDrinks.get(position).getRating()));
 
-        //final int pos = position;
-        //holder.mMap.onCreate(null);
-        /*holder.mMap.getMapAsync(new OnMapReadyCallback() {
+        //holder.mImage.setImageResource(R.mipmap.beer);
+
+        FirebaseData.getImage(mDrinks.get(position).getId(), new OnSuccessListener<byte[]>() {
+            @Override
+            public void onSuccess(byte[] bytes) {
+                Bitmap image = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                if (image != null) {
+                    holder.mImage.setImageBitmap(image);
+                }
+            }
+        }, new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                holder.mImage.setImageResource(R.mipmap.beer);
+            }
+        });
+
+        /*final int pos = position;
+        holder.mMap.onCreate(null);
+        holder.mMap.getMapAsync(new OnMapReadyCallback() {
             @Override
             public void onMapReady(GoogleMap googleMap) {
                 map = googleMap;
@@ -97,13 +118,13 @@ public class DrinkRecyclerViewAdapter extends RecyclerView.Adapter<DrinkRecycler
 
     }
 
-    private void setMapProperties(LatLng latLng, CameraUpdate camera) {
+    /*private void setMapProperties(LatLng latLng, CameraUpdate camera) {
         map.moveCamera(camera);
 
         map.addMarker(new MarkerOptions().position(latLng)).setVisible(true);
 
         map.setMapType(GoogleMap.MAP_TYPE_NORMAL);
-    }
+    }*/
 
     @Override
     public int getItemCount() {

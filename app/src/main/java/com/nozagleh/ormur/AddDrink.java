@@ -1,8 +1,13 @@
 package com.nozagleh.ormur;
 
 import android.content.Context;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.os.Bundle;
+import android.provider.MediaStore;
+import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -11,14 +16,15 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.ViewFlipper;
 
-import com.google.android.gms.location.places.Place;
-import com.google.android.gms.location.places.PlaceDetectionClient;
-import com.google.android.gms.location.places.PlaceLikelihoodBuffer;
-import com.google.android.gms.tasks.Task;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.storage.FirebaseStorage;
 import com.nozagleh.ormur.Models.Drink;
 
 import java.util.ArrayList;
@@ -33,7 +39,7 @@ import java.util.List;
  * Use the {@link AddDrink#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class AddDrink extends Fragment {
+public class AddDrink extends Fragment implements View.OnClickListener {
     private static final String FRAGMENT_TAG = "AddDrink";
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -42,6 +48,8 @@ public class AddDrink extends Fragment {
     private static final String DRINK_DESC = "drinkDesc";
     private static final String DRINK_RATING = "drinkRating";
     private static final String DRINK_EDIT = "drinkEdit";
+
+    private View view;
 
     private ViewFlipper viewFlipper;
     private Button btnPrev;
@@ -53,7 +61,10 @@ public class AddDrink extends Fragment {
     private EditText txtDescription;
 
     private RatingBar seekBar;
-    private TextView seekBarText;
+    private ImageView cameraImage;
+    private Button btnAddImage;
+
+    private static Boolean isImageSet = false;
 
     // TODO: Rename and change types of parameters
     private String drinkId;
@@ -65,6 +76,8 @@ public class AddDrink extends Fragment {
     private OnFragmentInteractionListener mListener;
 
     private Data data;
+
+    private static final int IMAGE_CAPTURE = 1;
 
     public AddDrink() {
         // Required empty public constructor
@@ -111,7 +124,7 @@ public class AddDrink extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_add_drink, container, false);
+        view = inflater.inflate(R.layout.fragment_add_drink, container, false);
 
         viewFlipper = view.findViewById(R.id.flipper_add);
         viewFlipper.setInAnimation(view.getContext(), R.anim.slide_in_right);
@@ -155,8 +168,21 @@ public class AddDrink extends Fragment {
         if (isEdit && drinkRating != null) {
             seekBar.setRating((float)drinkRating.floatValue());
         }
+        cameraImage = view.findViewById(R.id.cameraImage);
+        btnAddImage = view.findViewById(R.id.btnAddImage);
+        btnAddImage.setOnClickListener(this);
+
+        getImage();
+
         // Inflate the layout for this fragment
         return view;
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        Locator.startListening(getActivity());
     }
 
     @Override
@@ -232,9 +258,12 @@ public class AddDrink extends Fragment {
                     return;
                 }
                 // Establish a new data class
-                Location location = Locator.getLocation(getActivity());
+                Location location = Locator.getLocation();
 
-                String locationString = String.valueOf(location.getLatitude()) + ", " + String.valueOf(location.getLongitude());
+                String locationString = "";
+                if (location != null) {
+                    locationString = String.valueOf(location.getLatitude()) + ", " + String.valueOf(location.getLongitude());
+                }
 
                 // Create a drink from the available information
                 Drink drink = new Drink();
@@ -242,49 +271,33 @@ public class AddDrink extends Fragment {
                 drink.setTitle(txtName.getText().toString());
                 drink.setDescription(txtDescription.getText().toString());
                 drink.setRating((double)seekBar.getRating());
-
                 drink.setLocation(locationString);
 
+                cameraImage.setDrawingCacheEnabled(true);
+                cameraImage.buildDrawingCache();
+                Bitmap image = cameraImage.getDrawingCache();
+
+                String key = null;
                 if (drink.getId() != null) {
-                    FirebaseData.setDrink(drink, drink.getId());
+                    key = FirebaseData.setDrink(drink, drink.getId());
                 } else {
-                    FirebaseData.setDrink(drink, null);
+                    key = FirebaseData.setDrink(drink, null);
+                }
+
+                if (isImageSet) {
+                    FirebaseData.setImage(key, image);
                 }
 
                 mListener.doneAddingDrink(getString(R.string.drink_added,drink.getTitle()));
-
-                // Send the drink to the backend
-                /*data.addDrink(new Data.DataInterface() {
-                    @Override
-                    public void OnDataRecieved(List<Drink> drinks) {
-                        // Not used
-                    }
-
-                    @Override
-                    public void OnUserReceived(String userKey) {
-                        // Not used
-                    }
-
-                    @Override
-                    public void OnError(Exception exception) {
-                        Log.d(FRAGMENT_TAG, exception.getMessage());
-                    }
-
-                    @Override
-                    public void OnAdd(Boolean isSuccessful) {
-                        if (isSuccessful) {
-                            Snackbar snackbar = Snackbar.make(getActivity().findViewById(R.id.appCoordinator), "asdas", Snackbar.LENGTH_SHORT);
-                            snackbar.show();
-                            isEdit = true;
-                            mListener.doneAddingDrink();
-                        } else {
-
-                        }
-
-                    }
-                }, getActivity(), drink);*/
             }
         };
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+
+        Locator.stopListening();
     }
 
     public void removeDrink() {
@@ -317,6 +330,52 @@ public class AddDrink extends Fragment {
     public void onDetach() {
         super.onDetach();
         mListener = null;
+    }
+
+    @Override
+    public void onClick(View view) {
+        takeImage();
+    }
+
+    private void getImage() {
+        FirebaseData.getImage(drinkId, new OnSuccessListener<byte[]>() {
+            @Override
+            public void onSuccess(byte[] bytes) {
+                Bitmap image = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+
+                if (image != null) {
+                    cameraImage.setImageBitmap(image);
+                }
+            }
+        }, new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+
+            }
+        });
+    }
+
+    private void takeImage() {
+        Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if ( cameraIntent.resolveActivity(view.getContext().getPackageManager()) != null ) {
+            startActivityForResult(cameraIntent, IMAGE_CAPTURE);
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if ( requestCode == IMAGE_CAPTURE ) {
+            if (data != null) {
+                try {
+                    Bundle extas = data.getExtras();
+                    Bitmap image = (Bitmap) extas.get("data");
+                    cameraImage.setImageBitmap(image);
+                    isImageSet = true;
+                } catch (NullPointerException e) {
+                    Log.e(FRAGMENT_TAG, e.getMessage());
+                }
+            }
+        }
     }
 
     /**
