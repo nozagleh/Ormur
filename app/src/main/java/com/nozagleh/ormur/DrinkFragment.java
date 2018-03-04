@@ -15,6 +15,7 @@ import android.view.ViewGroup;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
 import com.nozagleh.ormur.Models.Drink;
 
@@ -156,7 +157,7 @@ public class DrinkFragment extends Fragment {
                 }
 
                 if (!adapterConnected) {
-                    drinkRecyclerViewAdapter = new DrinkRecyclerViewAdapter(drinkList , mListener, savedBundle);
+                    drinkRecyclerViewAdapter = new DrinkRecyclerViewAdapter(drinkList , mListener);
 
                     // Set the adapter
                     if (view instanceof SwipeRefreshLayout) {
@@ -184,7 +185,7 @@ public class DrinkFragment extends Fragment {
     public void updateList(List<Drink> drinks) {
         drinkList = drinks;
 
-        drinkRecyclerViewAdapter = new DrinkRecyclerViewAdapter(drinkList , mListener, savedBundle);
+        drinkRecyclerViewAdapter = new DrinkRecyclerViewAdapter(drinkList , mListener);
         recyclerView.setAdapter(drinkRecyclerViewAdapter);
 
         drinkRecyclerViewAdapter.notifyDataSetChanged();

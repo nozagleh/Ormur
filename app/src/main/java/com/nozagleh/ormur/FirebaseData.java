@@ -38,7 +38,7 @@ public class FirebaseData {
 
     public static void getDrinks(ValueEventListener listener) {
         DatabaseReference childReference = reference.child(getUser().getUid());
-        childReference.addValueEventListener(listener);
+        childReference.addListenerForSingleValueEvent(listener);
     }
 
     public static FirebaseUser getUser() {

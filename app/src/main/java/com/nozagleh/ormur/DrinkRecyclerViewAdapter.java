@@ -1,18 +1,19 @@
 package com.nozagleh.ormur;
 
 import android.content.res.Resources;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
@@ -34,12 +35,10 @@ public class DrinkRecyclerViewAdapter extends RecyclerView.Adapter<DrinkRecycler
     private final List<Drink> mDrinks;
     private final OnListFragmentInteractionListener mListener;
     private GoogleMap map;
-    private Bundle savedBundle;
 
-    public DrinkRecyclerViewAdapter(List<Drink> drinks, OnListFragmentInteractionListener listener, Bundle bundle) {
+    public DrinkRecyclerViewAdapter(List<Drink> drinks, OnListFragmentInteractionListener listener) {
         mDrinks = drinks;
         mListener = listener;
-        savedBundle = bundle;
     }
 
     @Override
@@ -54,26 +53,34 @@ public class DrinkRecyclerViewAdapter extends RecyclerView.Adapter<DrinkRecycler
         holder.mItem = mDrinks.get(position);
         holder.mIdView.setText(mDrinks.get(position).getTitle());
         holder.mContentView.setText(mDrinks.get(position).getDescription());
-        holder.mRating.setText(mDrinks.get(position).getRating().toString());
+        holder.mRating.setText(String.valueOf(mDrinks.get(position).getRating()));
 
-        final int pos = position;
-        holder.mMap.onCreate(savedBundle);
-        holder.mMap.getMapAsync(new OnMapReadyCallback() {
+        //final int pos = position;
+        //holder.mMap.onCreate(null);
+        /*holder.mMap.getMapAsync(new OnMapReadyCallback() {
             @Override
             public void onMapReady(GoogleMap googleMap) {
                 map = googleMap;
+                map.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
+                    @Override
+                    public void onMapLoaded() {
+                        String[] locStrings = mDrinks.get(pos).getLocation().split(",");
+                        LatLng latLng =  new LatLng(Double.valueOf(locStrings[0]), Double.valueOf(locStrings[1]));
+                        CameraUpdate location = CameraUpdateFactory.newLatLngZoom(latLng, 10);
 
-                String[] locStrings = mDrinks.get(pos).getLocation().split(",");
-                LatLng latLng =  new LatLng(Double.valueOf(locStrings[0]), Double.valueOf(locStrings[1]));
-                CameraUpdate location = CameraUpdateFactory.newLatLngZoom(latLng, 10);
+                        setMapProperties(latLng, location);
 
-                map.addMarker(new MarkerOptions().position(latLng)).setVisible(true);
-                //map.animateCamera(location);
-                map.moveCamera(location);
-                holder.mMap.onResume();
+                        map.snapshot(new GoogleMap.SnapshotReadyCallback() {
+                            @Override
+                            public void onSnapshotReady(Bitmap bitmap) {
+                                holder.mImage.setImageBitmap(bitmap);
+                            }
+                        });
+                    }
+                });
+                holder.mMap.removeAllViews();
             }
-        });
-
+        });*/
         holder.mView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View view) {
@@ -87,6 +94,15 @@ public class DrinkRecyclerViewAdapter extends RecyclerView.Adapter<DrinkRecycler
                 return false;
             }
         });
+
+    }
+
+    private void setMapProperties(LatLng latLng, CameraUpdate camera) {
+        map.moveCamera(camera);
+
+        map.addMarker(new MarkerOptions().position(latLng)).setVisible(true);
+
+        map.setMapType(GoogleMap.MAP_TYPE_NORMAL);
     }
 
     @Override
@@ -99,7 +115,8 @@ public class DrinkRecyclerViewAdapter extends RecyclerView.Adapter<DrinkRecycler
         public final TextView mIdView;
         public final TextView mContentView;
         public final TextView mRating;
-        public final MapView mMap;
+        public final ImageView mImage;
+        //public final MapView mMap;
 
         public Drink mItem;
 
@@ -109,16 +126,14 @@ public class DrinkRecyclerViewAdapter extends RecyclerView.Adapter<DrinkRecycler
             mIdView = (TextView) view.findViewById(R.id.id);
             mContentView = (TextView) view.findViewById(R.id.content);
             mRating = (TextView) view.findViewById(R.id.rating);
-            mMap = (MapView) view.findViewById(R.id.map);
+
+            mImage = (ImageView) view.findViewById(R.id.image);
+            //mMap = (MapView) view.findViewById(R.id.map);
         }
 
         @Override
         public String toString() {
             return super.toString() + " '" + mContentView.getText() + "'";
         }
-    }
-
-    private void ma() {
-
     }
 }

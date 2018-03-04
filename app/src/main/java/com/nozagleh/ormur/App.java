@@ -78,11 +78,12 @@ public class App extends AppCompatActivity implements DrinkFragment.OnListFragme
                             if (searchText.length() > 0) {
                                 searchTextChanged(searchText.getText().toString());
                             }
-
+                            item.setIcon(R.drawable.ic_close_black_24px);
                             searchBlock.setVisibility(View.VISIBLE);
 
                         } else {
                             resetList();
+                            item.setIcon(R.drawable.ic_search_black_24dp);
                             searchBlock.setVisibility(View.GONE);
 
                         }
@@ -134,6 +135,17 @@ public class App extends AppCompatActivity implements DrinkFragment.OnListFragme
             fragmentTransaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left);
             fragmentTransaction.add(R.id.content, drinkListFragment).commit();
         }
+
+
+        /*for(int i = 0; i < 100; i++) {
+            Drink drink = new Drink();
+            drink.setTitle(String.valueOf(i));
+            drink.setDescription(String.valueOf(i));
+            drink.setRating(1.0);
+            drink.setLocation("56.8629864,22.2958571");
+
+            FirebaseData.setDrink(drink, null);
+        }*/
 
         BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
