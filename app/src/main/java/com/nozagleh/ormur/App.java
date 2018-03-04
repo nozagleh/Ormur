@@ -63,8 +63,8 @@ public class App extends AppCompatActivity implements DrinkFragment.OnListFragme
         addDrinkFragment = new AddDrink();
         drinkListFragment = new DrinkFragment();
 
-        fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        fragmentTransaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left);
+        //fragmentTransaction = getSupportFragmentManager().beginTransaction();
+        //fragmentTransaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left);
 
         toolbar = (Toolbar) findViewById(R.id.toolBar);
         setSupportActionBar(toolbar);
@@ -100,8 +100,6 @@ public class App extends AppCompatActivity implements DrinkFragment.OnListFragme
 
         sharedPreferences = getSharedPreferences(STORAGE, 0);
 
-        checkPermissions();
-
         searchBlock = findViewById(R.id.searchBlock);
         searchBlock.setVisibility(View.GONE);
 
@@ -132,11 +130,12 @@ public class App extends AppCompatActivity implements DrinkFragment.OnListFragme
             }
 
             fragmentTransaction = getSupportFragmentManager().beginTransaction();
-            fragmentTransaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left);
+            //fragmentTransaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left);
             fragmentTransaction.add(R.id.content, drinkListFragment).commit();
         }
 
 
+        // Test data
         /*for(int i = 0; i < 100; i++) {
             Drink drink = new Drink();
             drink.setTitle(String.valueOf(i));
@@ -156,17 +155,19 @@ public class App extends AppCompatActivity implements DrinkFragment.OnListFragme
 
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+            // Hide the search block
+            searchBlock.setVisibility(View.GONE);
+
             switch (item.getItemId()) {
                 case R.id.navigation_home:
-                    searchBlock.setVisibility(View.GONE);
+                    getSupportFragmentManager().popBackStack();
                     fragmentTransaction = getSupportFragmentManager().beginTransaction();
-                    fragmentTransaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left);
+                    //fragmentTransaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left);
                     fragmentTransaction.replace(R.id.content, drinkListFragment).addToBackStack(null).commit();
                     return true;
                 case R.id.navigation_dashboard:
-                    searchBlock.setVisibility(View.GONE);
                     fragmentTransaction = getSupportFragmentManager().beginTransaction();
-                    fragmentTransaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left);
+                    //fragmentTransaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left);
                     fragmentTransaction.replace(R.id.content, addDrinkFragment).addToBackStack(null).commit();
                     return true;
                 case R.id.navigation_notifications:
@@ -183,7 +184,7 @@ public class App extends AppCompatActivity implements DrinkFragment.OnListFragme
         AddDrink addDrink = AddDrink.newInstance(item);
 
         fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        fragmentTransaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left);
+        //fragmentTransaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left);
         fragmentTransaction.replace(R.id.content,addDrink).addToBackStack(null).commit();
     }
 
@@ -201,20 +202,14 @@ public class App extends AppCompatActivity implements DrinkFragment.OnListFragme
 
     @Override
     public void doneAddingDrink(String message) {
+        getSupportFragmentManager().popBackStack();
+
         fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        fragmentTransaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left);
-        fragmentTransaction.replace(R.id.content,drinkListFragment).commit();
+        //fragmentTransaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left);
+        fragmentTransaction.replace(R.id.content,drinkListFragment).addToBackStack(null).commit();
 
         Snackbar snackbar = Snackbar.make(findViewById(R.id.content),message, Snackbar.LENGTH_LONG);
         snackbar.show();
-    }
-
-    private void checkPermissions() {
-        if (!Permissions.has_gps(this)) {
-            Permissions.ask_gps(this);
-        } else {
-            Locator.startListening(this);
-        }
     }
 
     private void resetList() {
