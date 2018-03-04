@@ -220,6 +220,7 @@ public class DrinkFragment extends Fragment {
      */
     public interface OnListFragmentInteractionListener {
         void onListFragmentInteraction(Drink item);
+        void onListFragmentInteractionClick(Drink item);
         void setAppBarSearch();
     }
 }

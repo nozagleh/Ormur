@@ -1,5 +1,6 @@
 package com.nozagleh.ormur;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -179,6 +180,14 @@ public class App extends AppCompatActivity implements DrinkFragment.OnListFragme
 
     };
 
+    /**
+     * On long click fragment interaction, a link between the activity -> fragment -> list.
+     *
+     * When a list item is clicked, the action is sent to the fragment holding the list,
+     * then passed on to the parent activity(this) for further development.
+     *
+     * @param item List item being long clicked
+     */
     @Override
     public void onListFragmentInteraction(Drink item) {
         AddDrink addDrink = AddDrink.newInstance(item);
@@ -186,6 +195,27 @@ public class App extends AppCompatActivity implements DrinkFragment.OnListFragme
         fragmentTransaction = getSupportFragmentManager().beginTransaction();
         //fragmentTransaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left);
         fragmentTransaction.replace(R.id.content,addDrink).addToBackStack(null).commit();
+    }
+
+    /**
+     * On click fragment interaction. A link between the activity -> fragment -> list.
+     *
+     * When a list item is clicked, the action is sent to the fragment holding the list,
+     * then passed on to the parent activity(this) for further development.
+     *
+     * @param item Current list item being clicked
+     */
+    @Override
+    public void onListFragmentInteractionClick(Drink item) {
+        Intent drinkDetails = new Intent(this, DrinkDetail.class);
+
+        drinkDetails.putExtra("id", item.getId());
+        drinkDetails.putExtra("title", item.getTitle());
+        drinkDetails.putExtra("description", item.getDescription());
+        drinkDetails.putExtra("location", item.getLocation());
+        drinkDetails.putExtra("rating", item.getRating());
+
+        startActivity(drinkDetails);
     }
 
     @Override

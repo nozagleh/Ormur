@@ -102,6 +102,16 @@ public class DrinkRecyclerViewAdapter extends RecyclerView.Adapter<DrinkRecycler
                 holder.mMap.removeAllViews();
             }
         });*/
+
+        holder.mView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (null != mListener) {
+                    mListener.onListFragmentInteractionClick(holder.mItem);
+                }
+            }
+        });
+
         holder.mView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View view) {

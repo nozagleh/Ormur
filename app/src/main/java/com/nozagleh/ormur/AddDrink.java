@@ -288,6 +288,7 @@ public class AddDrink extends Fragment implements View.OnClickListener {
                     FirebaseData.setImage(key, image);
                 }
 
+                isEdit = true;
                 mListener.doneAddingDrink(getString(R.string.drink_added,drink.getTitle()));
             }
         };
@@ -369,6 +370,7 @@ public class AddDrink extends Fragment implements View.OnClickListener {
                 try {
                     Bundle extas = data.getExtras();
                     Bitmap image = (Bitmap) extas.get("data");
+
                     cameraImage.setImageBitmap(image);
                     isImageSet = true;
                 } catch (NullPointerException e) {
