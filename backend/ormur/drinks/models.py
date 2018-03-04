@@ -9,7 +9,7 @@ from django.db import models
 class Drink(models.Model):
 	title = models.CharField(max_length=64)
 	description = models.TextField(default='')
-	rating = models.FloatField()
+	rating = models.FloatField(default=0, blank=True)
 	location = models.CharField(max_length=100)
 	added = models.DateTimeField(auto_now_add=True)
 	lastmodified = models.DateTimeField(auto_now=True)

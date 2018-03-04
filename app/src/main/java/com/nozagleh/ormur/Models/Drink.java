@@ -1,20 +1,24 @@
 package com.nozagleh.ormur.Models;
 
+import com.google.firebase.database.IgnoreExtraProperties;
+
 /**
  * Created by arnarfreyr on 13/02/2018.
  */
 
+@IgnoreExtraProperties
 public class Drink {
-    private int id;
+    private String id;
     private String title;
-    private Float rating;
+    private Double rating;
     private String description;
     private String location;
 
     public Drink() {
+        //this.id = -1;
     }
 
-    public Drink(int id, String title, Float rating, String description, String location) {
+    public Drink(String id, String title, Double rating, String description, String location) {
         this.id = id;
         this.title = title;
         this.rating = rating;
@@ -22,11 +26,11 @@ public class Drink {
         this.location = location;
     }
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
     }
 
@@ -38,11 +42,11 @@ public class Drink {
         this.title = title;
     }
 
-    public Float getRating() {
+    public Double getRating() {
         return rating;
     }
 
-    public void setRating(Float rating) {
+    public void setRating(Double rating) {
         this.rating = rating;
     }
 

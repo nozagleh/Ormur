@@ -12,6 +12,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.ValueEventListener;
 import com.nozagleh.ormur.Models.Drink;
 
 import java.util.ArrayList;
@@ -43,6 +48,8 @@ public class DrinkFragment extends Fragment {
 
     private boolean adapterConnected = false;
 
+    private Bundle savedBundle;
+
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
@@ -64,14 +71,17 @@ public class DrinkFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        savedBundle = savedInstanceState;
+
         if (getArguments() != null) {
             mColumnCount = getArguments().getInt(ARG_COLUMN_COUNT);
         }
 
+        // Init a drink list
         drinkList = new ArrayList<>();
 
-        data = new Data();
-        data.setupQueue(getActivity());
+        // data = new Data();
+        // data.setupQueue(getActivity());
 
 
     }
@@ -80,65 +90,105 @@ public class DrinkFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         view = inflater.inflate(R.layout.fragment_drink_list, container, false);
-
+        // Set the app bar to contain the search icon
         mListener.setAppBarSearch();
 
+        // Bind the swipe
         bindSwipeRefresh();
 
+        // Do a initial refresh
         refreshList();
 
         return view;
     }
 
+    /**
+     * Bind the swipe to refresh call.
+     */
     public void bindSwipeRefresh() {
         swipeRefreshLayout = view.findViewById(R.id.swipeRefresh);
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
+                // Call for a refresh
                 refreshList();
+                // Notify about any changes
                 drinkRecyclerViewAdapter.notifyDataSetChanged();
-
+                // Set refreshing to false
                 swipeRefreshLayout.setRefreshing(false);
             }
         });
     }
 
+    /**
+     * Refresh the local list by getting the drinks from the database
+     */
     public void refreshList() {
-        data.getDrink(getActivity(), new Data.DataInterface() {
+        FirebaseData.getDrinks(new ValueEventListener() {
             @Override
-            public void OnDataRecieved(List<Drink> drinks) {
-                drinkList = drinks;
-                Log.d(FRAGMENT_TAG,String.valueOf(drinks.size()));
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                // Create a new list of drinks
+                List<Drink> drinkList = new ArrayList<>();
+
+                // Loop through all the drinks returned from the database
+                for (DataSnapshot data:dataSnapshot.getChildren()) {
+                    // Create a new drink object
+                    Drink drink = new Drink();
+
+                    // Set the drink values
+                    drink.setId(data.getKey());
+                    drink.setTitle((String)data.child("title").getValue());
+                    drink.setDescription((String)data.child("description").getValue());
+                    drink.setLocation((String)data.child("location").getValue());
+
+                    // Check if rating comes as long or double
+                    if (data.child("rating").getValue() instanceof Long) {
+                        // Get the long value
+                        Long ratingLong = (long)data.child("rating").getValue();
+                        // Convert the rating to double
+                        drink.setRating(ratingLong.doubleValue());
+                    } else if (data.child("rating").getValue() instanceof Double) {
+                        // Cast the rating to double and set the drink rating
+                        drink.setRating((double)data.child("rating").getValue());
+                    }
+
+                    // Add the drink to the drink list
+                    drinkList.add(drink);
+                }
+
                 if (!adapterConnected) {
                     drinkRecyclerViewAdapter = new DrinkRecyclerViewAdapter(drinkList , mListener);
 
                     // Set the adapter
                     if (view instanceof SwipeRefreshLayout) {
                         Context context = view.getContext();
-                        recyclerView = (RecyclerView) view.findViewById(R.id.list);
-                        if (mColumnCount <= 1) {
+                        recyclerView = view.findViewById(R.id.list);
+                        if (mColumnCount < 1) {
                             recyclerView.setLayoutManager(new LinearLayoutManager(context));
                         } else {
-                            recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
+                            recyclerView.setLayoutManager(new GridLayoutManager(context, 1));
                         }
                         recyclerView.setAdapter(drinkRecyclerViewAdapter);
                     }
+
+                    drinkRecyclerViewAdapter.notifyDataSetChanged();
                 }
-                Log.d(FRAGMENT_TAG, String.valueOf(drinkList.size()));
-                drinkRecyclerViewAdapter.notifyDataSetChanged();
-                //drinkRecyclerViewAdapter.notifyItemChanged(0, drinkList.size());
             }
 
             @Override
-            public void OnUserReceived(String userKey) {
-
-            }
-
-            @Override
-            public void OnError(Exception exception) {
+            public void onCancelled(DatabaseError databaseError) {
 
             }
         });
+    }
+
+    public void updateList(List<Drink> drinks) {
+        drinkList = drinks;
+
+        drinkRecyclerViewAdapter = new DrinkRecyclerViewAdapter(drinkList , mListener);
+        recyclerView.setAdapter(drinkRecyclerViewAdapter);
+
+        drinkRecyclerViewAdapter.notifyDataSetChanged();
     }
 
     @Override
@@ -169,7 +219,6 @@ public class DrinkFragment extends Fragment {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnListFragmentInteractionListener {
-        // TODO: Update argument type and name
         void onListFragmentInteraction(Drink item);
         void setAppBarSearch();
     }

@@ -1,25 +1,25 @@
 package com.nozagleh.ormur;
 
 import android.content.Context;
-import android.content.res.Resources;
-import android.net.Uri;
+import android.location.Location;
 import android.os.Bundle;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RatingBar;
-import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.ViewFlipper;
 
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.PlaceDetectionClient;
+import com.google.android.gms.location.places.PlaceLikelihoodBuffer;
+import com.google.android.gms.tasks.Task;
 import com.nozagleh.ormur.Models.Drink;
-
-import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,13 +56,15 @@ public class AddDrink extends Fragment {
     private TextView seekBarText;
 
     // TODO: Rename and change types of parameters
-    private int drinkId;
+    private String drinkId;
     private String drinkName;
     private String drinkDesc;
-    private Float drinkRating;
+    private Double drinkRating;
     private Boolean isEdit = false;
 
     private OnFragmentInteractionListener mListener;
+
+    private Data data;
 
     public AddDrink() {
         // Required empty public constructor
@@ -79,10 +81,10 @@ public class AddDrink extends Fragment {
     public static AddDrink newInstance(Drink drink) {
         AddDrink fragment = new AddDrink();
         Bundle args = new Bundle();
-        args.putInt(DRINK_ID, drink.getId());
+        args.putString(DRINK_ID, drink.getId());
         args.putString(DRINK_NAME, drink.getTitle());
         args.putString(DRINK_DESC, drink.getDescription());
-        args.putFloat(DRINK_RATING, drink.getRating());
+        args.putDouble(DRINK_RATING, drink.getRating());
         args.putBoolean(DRINK_EDIT, true);
         fragment.setArguments(args);
         return fragment;
@@ -98,11 +100,11 @@ public class AddDrink extends Fragment {
         }
 
         if (getArguments() != null) {
-            drinkId = getArguments().getInt(DRINK_ID);
+            drinkId = getArguments().getString(DRINK_ID,null);
             drinkName = getArguments().getString(DRINK_NAME);
             drinkDesc = getArguments().getString(DRINK_DESC);
-            drinkRating = getArguments().getFloat(DRINK_RATING);
-            isEdit = getArguments().getBoolean(DRINK_EDIT);
+            drinkRating = getArguments().getDouble(DRINK_RATING);
+            isEdit = getArguments().getBoolean(DRINK_EDIT, false);
         }
     }
 
@@ -121,9 +123,13 @@ public class AddDrink extends Fragment {
 
         txtName = view.findViewById(R.id.txtName);
         txtDescription = view.findViewById(R.id.txtDesc);
+        txtName.setText("");
+        txtDescription.setText("");
 
-        txtName.setText(drinkName);
-        txtDescription.setText(drinkDesc);
+        if(isEdit) {
+            txtName.setText(drinkName);
+            txtDescription.setText(drinkDesc);
+        }
 
         dots = new ArrayList<>();
         TextView dot1 = view.findViewById(R.id.dot1);
@@ -145,8 +151,9 @@ public class AddDrink extends Fragment {
         btnNext.setOnClickListener(onNextClick());
 
         seekBar = view.findViewById(R.id.seekBar);
-        if (drinkRating != null) {
-            seekBar.setRating(drinkRating);
+        seekBar.setRating(0);
+        if (isEdit && drinkRating != null) {
+            seekBar.setRating((float)drinkRating.floatValue());
         }
         // Inflate the layout for this fragment
         return view;
@@ -197,13 +204,9 @@ public class AddDrink extends Fragment {
                 viewFlipper.setOutAnimation(view.getContext(), R.anim.slide_out_left);
                 viewFlipper.showNext();
                 changeDot(viewFlipper.getDisplayedChild());
-                Log.d(FRAGMENT_TAG, String.valueOf(current_dot));
-                Log.d(FRAGMENT_TAG, String.valueOf(dots.size()));
                 if ( current_dot >= dots.size() - 1 ) {
-                    //btnNext.setVisibility(View.INVISIBLE);
                     btnNext.setText(getResources().getText(R.string.txt_finish));
                     btnNext.setOnClickListener(onFinishListener());
-
                 } else {
                     btnNext.setVisibility(View.VISIBLE);
                 }
@@ -221,9 +224,72 @@ public class AddDrink extends Fragment {
         return new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                if (txtName.length() <= 0
+                || txtDescription.length() <= 0) {
+                    Snackbar snackbar = Snackbar.make(view,getString(R.string.add_error),Snackbar.LENGTH_LONG);
+                    snackbar.show();
 
+                    return;
+                }
+                // Establish a new data class
+                Location location = Locator.getLocation(getActivity());
+
+                String locationString = String.valueOf(location.getLatitude()) + ", " + String.valueOf(location.getLongitude());
+
+                // Create a drink from the available information
+                Drink drink = new Drink();
+                drink.setId(drinkId);
+                drink.setTitle(txtName.getText().toString());
+                drink.setDescription(txtDescription.getText().toString());
+                drink.setRating((double)seekBar.getRating());
+
+                drink.setLocation(locationString);
+
+                if (drink.getId() != null) {
+                    FirebaseData.setDrink(drink, drink.getId());
+                } else {
+                    FirebaseData.setDrink(drink, null);
+                }
+
+                mListener.doneAddingDrink(getString(R.string.drink_added,drink.getTitle()));
+
+                // Send the drink to the backend
+                /*data.addDrink(new Data.DataInterface() {
+                    @Override
+                    public void OnDataRecieved(List<Drink> drinks) {
+                        // Not used
+                    }
+
+                    @Override
+                    public void OnUserReceived(String userKey) {
+                        // Not used
+                    }
+
+                    @Override
+                    public void OnError(Exception exception) {
+                        Log.d(FRAGMENT_TAG, exception.getMessage());
+                    }
+
+                    @Override
+                    public void OnAdd(Boolean isSuccessful) {
+                        if (isSuccessful) {
+                            Snackbar snackbar = Snackbar.make(getActivity().findViewById(R.id.appCoordinator), "asdas", Snackbar.LENGTH_SHORT);
+                            snackbar.show();
+                            isEdit = true;
+                            mListener.doneAddingDrink();
+                        } else {
+
+                        }
+
+                    }
+                }, getActivity(), drink);*/
             }
         };
+    }
+
+    public void removeDrink() {
+        FirebaseData.removeDrink(drinkId);
+        mListener.doneAddingDrink(getString(R.string.drink_removed,drinkName));
     }
 
     public void changeDot(int index) {
@@ -264,7 +330,7 @@ public class AddDrink extends Fragment {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
         void addDrinkEditDrink();
+        void doneAddingDrink(String message);
     }
 }

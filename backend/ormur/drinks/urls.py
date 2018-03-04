@@ -19,5 +19,6 @@ from django.contrib import admin
 from . import views
 
 urlpatterns = [
-	url(r'^get/(?P<key>[-\w]+)/$' ,views.getAllJSON, name='getAllJSON')
+	url(r'^get/(?P<key>[-\w]+)/$' ,views.getAllJSON, name='getAllJSON'),
+	url(r'^add/(?P<key>[-\w]+)/$', views.addDrink, name='addDrink')
 ]
