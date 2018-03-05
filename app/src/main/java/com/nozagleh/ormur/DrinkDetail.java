@@ -3,6 +3,8 @@ package com.nozagleh.ormur;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -56,6 +58,7 @@ public class DrinkDetail extends AppCompatActivity {
                 public void onSuccess(byte[] bytes) {
                     if (bytes != null) {
                         Bitmap image = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                        image = Utils.getImageSize(image, Utils.ImageSizes.LARGE);
                         imageView.setImageBitmap(image);
                     }
                 }

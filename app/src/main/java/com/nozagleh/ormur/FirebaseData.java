@@ -63,6 +63,7 @@ public class FirebaseData {
 
     public static void removeDrink(String id) {
         reference.child(getUser().getUid()).child(id).removeValue();
+        removeImage(id);
     }
 
     public static void getDrinks(ValueEventListener listener) {
@@ -95,6 +96,37 @@ public class FirebaseData {
                 Uri downloadUrl = taskSnapshot.getDownloadUrl();
             }
         });
+    }
+
+    public static void setImage(String id, Uri imageUri) {
+        StorageReference imageReference = storageReference.child("images/" + getUser().getUid() + "/" + id + ".jpg");
+
+        UploadTask uploadTask = imageReference.putFile(imageUri);
+
+        uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+
+            }
+        });
+
+        uploadTask.addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+
+            }
+        });
+
+    }
+
+    /**
+     * Remove a image from the Firabase storage. Based on the id of the object being removed.
+     *
+     * @param id ID of the object
+     */
+    public static void removeImage(String id) {
+        StorageReference imageReference = storageReference.child("images/" + getUser().getUid() + "/" + id + ".jpg");
+        imageReference.delete();
     }
 
     public static FirebaseUser getUser() {
