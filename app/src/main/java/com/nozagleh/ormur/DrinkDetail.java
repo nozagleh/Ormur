@@ -283,6 +283,7 @@ public class DrinkDetail extends AppCompatActivity {
                     Bitmap image = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
                     image = Utils.getImageSize(image, Utils.ImageSizes.LARGE);
                     imageView.setImageBitmap(image);
+                    imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
                 }
             }
         }, new OnFailureListener() {
