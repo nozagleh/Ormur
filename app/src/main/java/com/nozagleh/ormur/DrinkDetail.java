@@ -23,6 +23,7 @@ import android.widget.TextView;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.nozagleh.ormur.Models.Drink;
 
 import org.w3c.dom.Text;
 
@@ -39,6 +40,9 @@ public class DrinkDetail extends AppCompatActivity {
 
     // Toolbar
     Toolbar toolbar;
+
+    // Current drink
+    Drink currentDrink;
 
     // Display fields
     ImageView imageView;
@@ -167,8 +171,10 @@ public class DrinkDetail extends AppCompatActivity {
                 // Show the edit fields if adding ned
                 setEditFieldsVisibility(View.VISIBLE);
             } else {
+                // Set current drink
+                setDrinkFromIntent(intent);
                 // Set field information if not new
-                setFieldInformation(intent);
+                setFieldInformation();
             }
         }
     }
@@ -249,34 +255,39 @@ public class DrinkDetail extends AppCompatActivity {
         }
     }
 
+    private void setDrinkFromIntent(Intent intent) {
+        currentDrink = new Drink();
+        currentDrink.setId(intent.getStringExtra("id"));
+        currentDrink.setTitle(intent.getStringExtra("title"));
+        currentDrink.setDescription(intent.getStringExtra("description"));
+        currentDrink.setLocation(intent.getStringExtra("location"));
+        currentDrink.setRating(intent.getDoubleExtra("rating",0));
+    }
+
     /**
      * Set all field values based on the intent.
-     *
-     * @param intent Intent
      */
-    private void setFieldValues(Intent intent) {
+    private void setFieldValues() {
         // Set text fields
-        txtTitle.setText(intent.getStringExtra("title"));
-        txtDescription.setText(intent.getStringExtra("description"));
-        txtRating.setText(String.valueOf(intent.getDoubleExtra("rating",0)));
+        txtTitle.setText(currentDrink.getTitle());
+        txtDescription.setText(currentDrink.getDescription());
+        txtRating.setText(String.valueOf(currentDrink.getRating()));
 
         // Set edit fields
-        txtTitleEdit.setText(intent.getStringExtra("title"));
-        txtDescriptionEdit.setText(intent.getStringExtra("description"));
-        txtRatingEdit.setText(String.valueOf(intent.getDoubleExtra("rating",0)));
+        txtTitleEdit.setText(currentDrink.getTitle());
+        txtDescriptionEdit.setText(currentDrink.getDescription());
+        txtRatingEdit.setText(String.valueOf(currentDrink.getRating()));
     }
 
     /**
      * Set all field information. Text, editfields, and image.
-     *
-     * @param intent Intent
      */
-    private void setFieldInformation(Intent intent) {
+    private void setFieldInformation() {
         // Set all fields values
-        setFieldValues(intent);
+        setFieldValues();
 
         // Get the image from the firebase storage
-        FirebaseData.getImage(intent.getStringExtra("id"), new OnSuccessListener<byte[]>() {
+        FirebaseData.getImage(currentDrink.getId(), new OnSuccessListener<byte[]>() {
             @Override
             public void onSuccess(byte[] bytes) {
                 if (bytes != null) {
