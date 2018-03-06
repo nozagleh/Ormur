@@ -51,8 +51,6 @@ public class App extends AppCompatActivity implements DrinkFragment.OnListFragme
 
     private List<Drink> listOfDrinks;
 
-    private FirebaseAuth firebaseAuth;
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.bar, menu);

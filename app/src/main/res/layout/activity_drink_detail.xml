@@ -2,6 +2,7 @@
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drinkDetails"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.nozagleh.ormur.DrinkDetail">
@@ -61,6 +62,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="@dimen/text_heading_size"
+            android:inputType="textCapSentences|textNoSuggestions"
             android:textStyle="bold"
             android:layout_marginBottom="20dp"
             android:hint="@string/txt_name"
@@ -84,10 +86,11 @@
             android:layout_height="wrap_content"
             android:layout_alignParentStart="true"
             android:textStyle="italic"
+            android:inputType="number"
             android:layout_marginBottom="20dp"
             android:hint="@string/txt_rating"
             android:textSize="@dimen/text_rating_size"
-            android:layout_below="@id/txtTitle" />
+            android:layout_below="@id/txtTitleEdit" />
 
         <TextView
             android:id="@+id/txtDescription"
@@ -102,10 +105,11 @@
             android:id="@+id/txtDescriptionEdit"
             android:textSize="@dimen/text_size"
             android:hint="@string/txt_description"
+            android:inputType="textMultiLine"
             android:layout_marginBottom="20dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/txtRating" />
+            android:layout_below="@id/txtRatingEdit" />
 
     </RelativeLayout>
 
