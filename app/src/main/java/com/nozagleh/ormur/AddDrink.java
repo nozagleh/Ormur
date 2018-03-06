@@ -1,15 +1,22 @@
 package com.nozagleh.ormur;
 
+import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Rect;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.os.StrictMode;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.FileProvider;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,6 +26,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RatingBar;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ViewFlipper;
 
 import com.google.android.gms.location.LocationServices;
@@ -27,6 +35,10 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.nozagleh.ormur.Models.Drink;
 
+import org.w3c.dom.Text;
+
+import java.io.File;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -78,6 +90,9 @@ public class AddDrink extends Fragment implements View.OnClickListener {
     private Data data;
 
     private static final int IMAGE_CAPTURE = 1;
+    private File imageFile;
+    private Bitmap scaledImage;
+    private Uri imageURI;
 
     public AddDrink() {
         // Required empty public constructor
@@ -149,6 +164,8 @@ public class AddDrink extends Fragment implements View.OnClickListener {
         dots.add(dot1);
         TextView dot2 = view.findViewById(R.id.dot2);
         dots.add(dot2);
+        TextView dot3 = view.findViewWithTag(R.id.dot3);
+        dots.add(dot3);
 
         btnPrev = view.findViewById(R.id.btn_prev);
         btnNext = view.findViewById(R.id.btn_next);
@@ -230,6 +247,7 @@ public class AddDrink extends Fragment implements View.OnClickListener {
                 viewFlipper.setOutAnimation(view.getContext(), R.anim.slide_out_left);
                 viewFlipper.showNext();
                 changeDot(viewFlipper.getDisplayedChild());
+                Log.d(FRAGMENT_TAG, String.valueOf(dots.size()));
                 if ( current_dot >= dots.size() - 1 ) {
                     btnNext.setText(getResources().getText(R.string.txt_finish));
                     btnNext.setOnClickListener(onFinishListener());
@@ -273,21 +291,22 @@ public class AddDrink extends Fragment implements View.OnClickListener {
                 drink.setRating((double)seekBar.getRating());
                 drink.setLocation(locationString);
 
-                cameraImage.setDrawingCacheEnabled(true);
-                cameraImage.buildDrawingCache();
-                Bitmap image = cameraImage.getDrawingCache();
-
-                String key = null;
+                String key;
                 if (drink.getId() != null) {
                     key = FirebaseData.setDrink(drink, drink.getId());
                 } else {
                     key = FirebaseData.setDrink(drink, null);
                 }
 
-                if (isImageSet) {
-                    FirebaseData.setImage(key, image);
+                //cameraImage.setDrawingCacheEnabled(true);
+                //cameraImage.buildDrawingCache();
+                if (isImageSet && imageFile != null && scaledImage != null) {
+                    FirebaseData.setImage(key, scaledImage);
+                    //Uri imageUri = FileProvider.getUriForFile(getContext(),getActivity().getPackageName() + ".fileprovider", imageFile);
+                    //FirebaseData.setImage(key, imageUri);
                 }
 
+                isEdit = true;
                 mListener.doneAddingDrink(getString(R.string.drink_added,drink.getTitle()));
             }
         };
@@ -302,6 +321,7 @@ public class AddDrink extends Fragment implements View.OnClickListener {
 
     public void removeDrink() {
         FirebaseData.removeDrink(drinkId);
+
         mListener.doneAddingDrink(getString(R.string.drink_removed,drinkName));
     }
 
@@ -309,8 +329,12 @@ public class AddDrink extends Fragment implements View.OnClickListener {
         TextView oldDot = dots.get(current_dot);
         TextView newDot = dots.get(index);
 
-        oldDot.setTextColor(getResources().getColor(R.color.colorPrimary));
-        newDot.setTextColor(getResources().getColor(R.color.colorAccent));
+        Log.d(FRAGMENT_TAG, String.valueOf(current_dot));
+        Log.d(FRAGMENT_TAG, String.valueOf(index));
+        Log.d(FRAGMENT_TAG, String.valueOf(dots.get(2)));
+
+        //oldDot.setTextColor(getResources().getColor(R.color.colorPrimary));
+        //newDot.setTextColor(getResources().getColor(R.color.colorAccent));
 
         current_dot = index;
     }
@@ -341,9 +365,8 @@ public class AddDrink extends Fragment implements View.OnClickListener {
         FirebaseData.getImage(drinkId, new OnSuccessListener<byte[]>() {
             @Override
             public void onSuccess(byte[] bytes) {
-                Bitmap image = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-
-                if (image != null) {
+                if (bytes != null) {
+                    Bitmap image = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
                     cameraImage.setImageBitmap(image);
                 }
             }
@@ -357,24 +380,62 @@ public class AddDrink extends Fragment implements View.OnClickListener {
 
     private void takeImage() {
         Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
         if ( cameraIntent.resolveActivity(view.getContext().getPackageManager()) != null ) {
-            startActivityForResult(cameraIntent, IMAGE_CAPTURE);
+            try {
+                imageFile = createTempImageFile("image",".jpg");
+                imageFile.delete();
+
+                imageURI = FileProvider.getUriForFile(getContext(),getActivity().getPackageName() + ".fileprovider",imageFile);
+                cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageURI);
+
+                startActivityForResult(cameraIntent, IMAGE_CAPTURE);
+            } catch (Exception e) {
+                Log.d(FRAGMENT_TAG, "Could not create image file");
+                Permissions.askStorage(getActivity());
+            }
         }
+    }
+
+    private File createTempImageFile(String prefix, String suffix) throws Exception {
+        File tempDirectory = new File(getContext().getExternalFilesDir(
+                Environment.DIRECTORY_PICTURES),".temp"
+        );
+
+        if (!tempDirectory.mkdir() || tempDirectory.exists()) {
+            Log.d(FRAGMENT_TAG, "File not created");
+        }
+
+        return File.createTempFile(prefix, suffix, tempDirectory);
     }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if ( requestCode == IMAGE_CAPTURE ) {
-            if (data != null) {
-                try {
-                    Bundle extas = data.getExtras();
-                    Bitmap image = (Bitmap) extas.get("data");
-                    cameraImage.setImageBitmap(image);
-                    isImageSet = true;
-                } catch (NullPointerException e) {
-                    Log.e(FRAGMENT_TAG, e.getMessage());
-                }
+        if ( requestCode == IMAGE_CAPTURE && resultCode == Activity.RESULT_OK ) {
+            setImage();
+        }
+    }
+
+    private void setImage() {
+        this.getActivity().getContentResolver().notifyChange(imageURI, null);
+        ContentResolver contentResolver = this.getActivity().getContentResolver();
+
+        Bitmap image;
+
+        try {
+            // Get the image from URI
+            image = android.provider.MediaStore.Images.Media.getBitmap(contentResolver, imageURI);
+            // Get the correct size for the image
+            image = Utils.getImageSize(image, Utils.ImageSizes.LARGE);
+
+            if (image != null) {
+                cameraImage.setImageBitmap(image);
+                scaledImage = image;
+                isImageSet = true;
             }
+
+        } catch (Exception e) {
+            Log.d(FRAGMENT_TAG, "Failed to load image");
         }
     }
 

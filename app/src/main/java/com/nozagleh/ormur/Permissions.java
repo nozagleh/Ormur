@@ -17,13 +17,15 @@ public class Permissions {
      */
     private static final int PERMISSION_GPS = 42;
 
+    private static final int PERMISSION_WRITE = 34;
+
     /**
      * A general permission checker, checks for user permission for the current activity.
      * @param askingActivity The activity which this is invoked in
      * @param permission The permission in question
      * @return boolean, if permission granted or not
      */
-    private static boolean check_permission(Activity askingActivity, String permission) {
+    private static boolean checkPermission(Activity askingActivity, String permission) {
         int has_permission = ContextCompat.checkSelfPermission(askingActivity, permission);
 
         if (has_permission == PackageManager.PERMISSION_DENIED) {
@@ -39,8 +41,8 @@ public class Permissions {
      * @param askingActivity The activity which this is invoked in
      * @return boolean if has permission
      */
-    public static boolean has_gps(Activity askingActivity) {
-        return check_permission(askingActivity, Manifest.permission.ACCESS_FINE_LOCATION);
+    public static boolean hasGPS(Activity askingActivity) {
+        return checkPermission(askingActivity, Manifest.permission.ACCESS_FINE_LOCATION);
     }
 
     /**
@@ -48,8 +50,12 @@ public class Permissions {
      *
      * @param askingActivity
      */
-    public static void ask_gps(Activity askingActivity) {
-        ask_permission(askingActivity, Manifest.permission.ACCESS_FINE_LOCATION, PERMISSION_GPS);
+    public static void askGPS(Activity askingActivity) {
+        askPermission(askingActivity, Manifest.permission.ACCESS_FINE_LOCATION, PERMISSION_GPS);
+    }
+
+    public static void askStorage(Activity askingActivity) {
+        askPermission(askingActivity, Manifest.permission.WRITE_EXTERNAL_STORAGE, PERMISSION_WRITE);
     }
 
     /**
@@ -61,7 +67,7 @@ public class Permissions {
      * @param permission The permission in question
      * @param permissionKey The app constant key of the permission
      */
-    public static void ask_permission(Activity askingActivity, String permission, int permissionKey) {
+    public static void askPermission(Activity askingActivity, String permission, int permissionKey) {
         // Should we show an explanation?
         if (ActivityCompat.shouldShowRequestPermissionRationale(askingActivity,
                 permission)) {
@@ -74,7 +80,7 @@ public class Permissions {
         }
     }
 
-    public static boolean is_granted(String permission, int permissionResults) {
+    public static boolean isGranted(String permission, int permissionResults) {
         switch (permission) {
             // Check for fine location permission
             case Manifest.permission.ACCESS_FINE_LOCATION:

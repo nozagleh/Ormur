@@ -80,10 +80,8 @@ public class DrinkFragment extends Fragment {
         // Init a drink list
         drinkList = new ArrayList<>();
 
-        // data = new Data();
-        // data.setupQueue(getActivity());
-
-
+        // Do a initial refresh
+        refreshList(false);
     }
 
     @Override
@@ -93,13 +91,17 @@ public class DrinkFragment extends Fragment {
         // Set the app bar to contain the search icon
         mListener.setAppBarSearch();
 
+        return view;
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        refreshList(true);
+
         // Bind the swipe
         bindSwipeRefresh();
-
-        // Do a initial refresh
-        refreshList();
-
-        return view;
     }
 
     /**
@@ -111,66 +113,48 @@ public class DrinkFragment extends Fragment {
             @Override
             public void onRefresh() {
                 // Call for a refresh
-                refreshList();
-                // Notify about any changes
-                drinkRecyclerViewAdapter.notifyDataSetChanged();
+                refreshList(false);
                 // Set refreshing to false
                 swipeRefreshLayout.setRefreshing(false);
             }
         });
     }
 
+    private void setListener() {
+        drinkRecyclerViewAdapter = new DrinkRecyclerViewAdapter(drinkList , mListener);
+
+        if (view instanceof SwipeRefreshLayout) {
+            Context context = view.getContext();
+            recyclerView = view.findViewById(R.id.list);
+            if (mColumnCount < 1) {
+                recyclerView.setLayoutManager(new LinearLayoutManager(context));
+            } else {
+                recyclerView.setLayoutManager(new GridLayoutManager(context, 1));
+            }
+            recyclerView.setAdapter(drinkRecyclerViewAdapter);
+        }
+
+    }
+
     /**
      * Refresh the local list by getting the drinks from the database
      */
-    public void refreshList() {
+    public void refreshList(Boolean onlyIfEmpty) {
+        if (onlyIfEmpty) {
+            return;
+        }
+
         FirebaseData.getDrinks(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                // Create a new list of drinks
-                List<Drink> drinkList = new ArrayList<>();
+                List<Drink> list = processData(dataSnapshot);
 
-                // Loop through all the drinks returned from the database
-                for (DataSnapshot data:dataSnapshot.getChildren()) {
-                    // Create a new drink object
-                    Drink drink = new Drink();
-
-                    // Set the drink values
-                    drink.setId(data.getKey());
-                    drink.setTitle((String)data.child("title").getValue());
-                    drink.setDescription((String)data.child("description").getValue());
-                    drink.setLocation((String)data.child("location").getValue());
-
-                    // Check if rating comes as long or double
-                    if (data.child("rating").getValue() instanceof Long) {
-                        // Get the long value
-                        Long ratingLong = (long)data.child("rating").getValue();
-                        // Convert the rating to double
-                        drink.setRating(ratingLong.doubleValue());
-                    } else if (data.child("rating").getValue() instanceof Double) {
-                        // Cast the rating to double and set the drink rating
-                        drink.setRating((double)data.child("rating").getValue());
-                    }
-
-                    // Add the drink to the drink list
-                    drinkList.add(drink);
+                if (list.size() != drinkList.size()) {
+                    drinkList = list;
+                    setListener();
                 }
 
-                if (!adapterConnected) {
-                    drinkRecyclerViewAdapter = new DrinkRecyclerViewAdapter(drinkList , mListener);
-
-                    // Set the adapter
-                    if (view instanceof SwipeRefreshLayout) {
-                        Context context = view.getContext();
-                        recyclerView = view.findViewById(R.id.list);
-                        if (mColumnCount < 1) {
-                            recyclerView.setLayoutManager(new LinearLayoutManager(context));
-                        } else {
-                            recyclerView.setLayoutManager(new GridLayoutManager(context, 1));
-                        }
-                        recyclerView.setAdapter(drinkRecyclerViewAdapter);
-                    }
-
+                if (drinkRecyclerViewAdapter != null) {
                     drinkRecyclerViewAdapter.notifyDataSetChanged();
                 }
             }
@@ -182,11 +166,45 @@ public class DrinkFragment extends Fragment {
         });
     }
 
+    public List<Drink> processData(DataSnapshot dataSnapshot) {
+        // Create a new list of drinks
+        List<Drink> currentDrinkList = new ArrayList<>();
+
+        // Loop through all the drinks returned from the database
+        for (DataSnapshot data:dataSnapshot.getChildren()) {
+            // Create a new drink object
+            Drink drink = new Drink();
+
+            // Get title first so we can check the value
+            drink.setTitle((String) data.child("title").getValue());
+
+            // Set the drink values
+            drink.setId(data.getKey());
+            drink.setDescription((String) data.child("description").getValue());
+            drink.setLocation((String) data.child("location").getValue());
+
+            // Check if rating comes as long or double
+            if (data.child("rating").getValue() instanceof Long) {
+                // Get the long value
+                Long ratingLong = (long) data.child("rating").getValue();
+                // Convert the rating to double
+                drink.setRating(ratingLong.doubleValue());
+            } else if (data.child("rating").getValue() instanceof Double) {
+                // Cast the rating to double and set the drink rating
+                drink.setRating((double) data.child("rating").getValue());
+            }
+
+            currentDrinkList.add(drink);
+        }
+
+        return currentDrinkList;
+    }
+
     public void updateList(List<Drink> drinks) {
         drinkList = drinks;
 
-        drinkRecyclerViewAdapter = new DrinkRecyclerViewAdapter(drinkList , mListener);
-        recyclerView.setAdapter(drinkRecyclerViewAdapter);
+        //drinkRecyclerViewAdapter = new DrinkRecyclerViewAdapter(drinkList , mListener, getActivity().getResources());
+        //recyclerView.setAdapter(drinkRecyclerViewAdapter);
 
         drinkRecyclerViewAdapter.notifyDataSetChanged();
     }
@@ -220,6 +238,7 @@ public class DrinkFragment extends Fragment {
      */
     public interface OnListFragmentInteractionListener {
         void onListFragmentInteraction(Drink item);
+        void onListFragmentInteractionClick(Drink item);
         void setAppBarSearch();
     }
 }

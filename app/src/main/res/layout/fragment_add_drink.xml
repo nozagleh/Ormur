@@ -96,23 +96,29 @@
                 android:layout_centerInParent="true"
                 android:layout_marginBottom="10dp"
                 android:text="@string/txt_rating_desc"/>
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
             <ImageView
                 android:id="@+id/cameraImage"
-                android:layout_below="@id/txt_rating_desc"
+                android:layout_alignParentTop="true"
                 android:layout_centerInParent="true"
                 android:layout_marginTop="20dp"
-                android:minWidth="200dp"
-                android:minHeight="200dp"
+                android:scaleType="centerCrop"
+                android:adjustViewBounds="true"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+                android:layout_height="200dp"
+                android:background="@color/cardview_dark_background"/>
             <Button
                 android:id="@+id/btnAddImage"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
                 android:layout_below="@id/cameraImage"
-                android:text="Add image"/>
+                android:text="@string/txt_add_image"/>
 
         </RelativeLayout>
     </ViewFlipper>

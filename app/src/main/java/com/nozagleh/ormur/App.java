@@ -1,5 +1,6 @@
 package com.nozagleh.ormur;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -18,6 +19,7 @@ import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -47,7 +49,7 @@ public class App extends AppCompatActivity implements DrinkFragment.OnListFragme
     private RelativeLayout searchBlock;
     private EditText searchText;
 
-    private FirebaseAuth firebaseAuth;
+    private List<Drink> listOfDrinks;
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -124,6 +126,8 @@ public class App extends AppCompatActivity implements DrinkFragment.OnListFragme
             }
         });
 
+        getDrinks(false, null);
+
         if (findViewById(R.id.content) != null) {
             if (savedInstanceState != null) {
                 return;
@@ -133,18 +137,6 @@ public class App extends AppCompatActivity implements DrinkFragment.OnListFragme
             //fragmentTransaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left);
             fragmentTransaction.add(R.id.content, drinkListFragment).commit();
         }
-
-
-        // Test data
-        /*for(int i = 0; i < 100; i++) {
-            Drink drink = new Drink();
-            drink.setTitle(String.valueOf(i));
-            drink.setDescription(String.valueOf(i));
-            drink.setRating(1.0);
-            drink.setLocation("56.8629864,22.2958571");
-
-            FirebaseData.setDrink(drink, null);
-        }*/
 
         BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
@@ -179,6 +171,14 @@ public class App extends AppCompatActivity implements DrinkFragment.OnListFragme
 
     };
 
+    /**
+     * On long click fragment interaction, a link between the activity -> fragment -> list.
+     *
+     * When a list item is clicked, the action is sent to the fragment holding the list,
+     * then passed on to the parent activity(this) for further development.
+     *
+     * @param item List item being long clicked
+     */
     @Override
     public void onListFragmentInteraction(Drink item) {
         AddDrink addDrink = AddDrink.newInstance(item);
@@ -186,6 +186,29 @@ public class App extends AppCompatActivity implements DrinkFragment.OnListFragme
         fragmentTransaction = getSupportFragmentManager().beginTransaction();
         //fragmentTransaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left);
         fragmentTransaction.replace(R.id.content,addDrink).addToBackStack(null).commit();
+    }
+
+    /**
+     * On click fragment interaction. A link between the activity -> fragment -> list.
+     *
+     * When a list item is clicked, the action is sent to the fragment holding the list,
+     * then passed on to the parent activity(this) for further development.
+     *
+     * @param item Current list item being clicked
+     */
+    @Override
+    public void onListFragmentInteractionClick(Drink item) {
+        Intent drinkDetails = new Intent(this, DrinkDetail.class);
+
+        drinkDetails.putExtra("id", item.getId());
+        drinkDetails.putExtra("title", item.getTitle());
+        drinkDetails.putExtra("description", item.getDescription());
+        drinkDetails.putExtra("location", item.getLocation());
+        drinkDetails.putExtra("rating", item.getRating());
+
+        drinkDetails.putExtra("imge", item.getImageBytes());
+
+        startActivity(drinkDetails);
     }
 
     @Override
@@ -214,14 +237,13 @@ public class App extends AppCompatActivity implements DrinkFragment.OnListFragme
 
     private void resetList() {
         DrinkFragment drinkFragment = (DrinkFragment) getSupportFragmentManager().findFragmentById(R.id.content);
-        drinkFragment.refreshList();
+        drinkFragment.refreshList(true);
     }
 
-    private void searchTextChanged(final String searchText) {
+    private List<Drink> getDrinks(final Boolean isSearch, final String searchText) {
         FirebaseData.getDrinks(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                DrinkFragment drinkFragment = (DrinkFragment) getSupportFragmentManager().findFragmentById(R.id.content);
                 // Create a new list of drinks
                 List<Drink> drinkList = new ArrayList<>();
 
@@ -233,32 +255,35 @@ public class App extends AppCompatActivity implements DrinkFragment.OnListFragme
                     // Get title first so we can check the value
                     drink.setTitle((String) data.child("title").getValue());
 
-                    Pattern searchPattern = Pattern.compile("([\\w\\s])*" + searchText + "([\\w\\s])*");
-                    Matcher matcher = searchPattern.matcher(drink.getTitle().toLowerCase());
-                    if (matcher.find()) {
-                        Log.d(ACTIVITY_TAG, "matches");
-                        // Set the drink values
-                        drink.setId(data.getKey());
-                        drink.setDescription((String) data.child("description").getValue());
-                        drink.setLocation((String) data.child("location").getValue());
+                    // Set the drink values
+                    drink.setId(data.getKey());
+                    drink.setDescription((String) data.child("description").getValue());
+                    drink.setLocation((String) data.child("location").getValue());
 
-                        // Check if rating comes as long or double
-                        if (data.child("rating").getValue() instanceof Long) {
-                            // Get the long value
-                            Long ratingLong = (long) data.child("rating").getValue();
-                            // Convert the rating to double
-                            drink.setRating(ratingLong.doubleValue());
-                        } else if (data.child("rating").getValue() instanceof Double) {
-                            // Cast the rating to double and set the drink rating
-                            drink.setRating((double) data.child("rating").getValue());
+                    // Check if rating comes as long or double
+                    if (data.child("rating").getValue() instanceof Long) {
+                        // Get the long value
+                        Long ratingLong = (long) data.child("rating").getValue();
+                        // Convert the rating to double
+                        drink.setRating(ratingLong.doubleValue());
+                    } else if (data.child("rating").getValue() instanceof Double) {
+                        // Cast the rating to double and set the drink rating
+                        drink.setRating((double) data.child("rating").getValue());
+                    }
+
+                    // Add the drink to the drink list
+                    if (isSearch) {
+                        Pattern searchPattern = Pattern.compile("([\\w\\s])*" + searchText + "([\\w\\s])*");
+                        Matcher matcher = searchPattern.matcher(drink.getTitle().toLowerCase());
+
+                        if (matcher.find()) {
+                            drinkList.add(drink);
                         }
-
-                        // Add the drink to the drink list
+                    } else {
                         drinkList.add(drink);
                     }
                 }
-
-                drinkFragment.updateList(drinkList);
+                listOfDrinks = drinkList;
             }
 
             @Override
@@ -266,6 +291,13 @@ public class App extends AppCompatActivity implements DrinkFragment.OnListFragme
 
             }
         });
+
+        return listOfDrinks;
+    }
+
+    private void searchTextChanged(final String searchText) {
+        DrinkFragment drinkFragment = (DrinkFragment) getSupportFragmentManager().findFragmentById(R.id.content);
+        drinkFragment.updateList(getDrinks(true, searchText));
     }
 
     @Override

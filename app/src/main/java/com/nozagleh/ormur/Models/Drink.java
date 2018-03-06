@@ -1,6 +1,12 @@
 package com.nozagleh.ormur.Models;
 
+import android.graphics.Bitmap;
+
+import com.google.firebase.database.Exclude;
 import com.google.firebase.database.IgnoreExtraProperties;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 
 /**
  * Created by arnarfreyr on 13/02/2018.
@@ -13,6 +19,7 @@ public class Drink {
     private Double rating;
     private String description;
     private String location;
+    private Bitmap image;
 
     public Drink() {
         //this.id = -1;
@@ -64,5 +71,27 @@ public class Drink {
 
     public void setLocation(String location) {
         this.location = location;
+    }
+
+    @Exclude
+    public Bitmap getImage() {
+        return image;
+    }
+
+    @Exclude
+    public void setImage(Bitmap image) {
+        this.image = image;
+    }
+
+    @Exclude
+    public byte[] getImageBytes() {
+        if (image != null) {
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            image.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+
+            return stream.toByteArray();
+        }
+
+        return null;
     }
 }

@@ -58,7 +58,7 @@ public class Locator {
         }
 
         // Check if the right permissions have been granted
-        if(Permissions.has_gps(activity)) {
+        if(Permissions.hasGPS(activity)) {
             try{
                 // Start requesting location updates
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 5, locationListener);
