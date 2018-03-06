@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.location.Location;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -13,6 +14,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.view.menu.MenuBuilder;
 import android.support.v7.widget.Toolbar;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -31,9 +35,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DrinkDetail extends AppCompatActivity {
+    private static final String TAG = "DrinkDetails";
 
     // Boolean to set if new object is being added or edited
-    Boolean isNew = false, isEdit = false;
+    Boolean isNew = false, isEdit = false, hasChanged = false, hasImageChanged = false;
 
     // Actionbar menu
     Menu saveDeleteMenu;
@@ -43,6 +48,8 @@ public class DrinkDetail extends AppCompatActivity {
 
     // Current drink
     Drink currentDrink;
+    // Drink image
+    Bitmap image;
 
     // Display fields
     ImageView imageView;
@@ -122,14 +129,38 @@ public class DrinkDetail extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.app_bar_save) {
-            // TODO add save function
+            // Save the current drink
+            saveDrink();
             return true;
         } else if (item.getItemId() == R.id.app_bar_delete) {
-            // TODO add trash function
+            // Remove the current drink
+            FirebaseData.removeDrink(currentDrink.getId());
+
+            // Finish the activity
+            this.finish();
             return true;
         }
 
         return false;
+    }
+
+    private TextWatcher onTextChange() {
+        return new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                hasChanged = true;
+            }
+        };
     }
 
     /**
@@ -190,6 +221,10 @@ public class DrinkDetail extends AppCompatActivity {
         txtTitleEdit = findViewById(R.id.txtTitleEdit);
         txtDescriptionEdit = findViewById(R.id.txtDescriptionEdit);
         txtRatingEdit = findViewById(R.id.txtRatingEdit);
+
+        txtTitleEdit.addTextChangedListener(onTextChange());
+        txtDescriptionEdit.addTextChangedListener(onTextChange());
+        txtRatingEdit.addTextChangedListener(onTextChange());
 
         // Add the fields to the list
         editFields.add(txtTitleEdit);
@@ -291,7 +326,7 @@ public class DrinkDetail extends AppCompatActivity {
             @Override
             public void onSuccess(byte[] bytes) {
                 if (bytes != null) {
-                    Bitmap image = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                    image = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
                     image = Utils.getImageSize(image, Utils.ImageSizes.LARGE);
                     imageView.setImageBitmap(image);
                     imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
@@ -328,9 +363,13 @@ public class DrinkDetail extends AppCompatActivity {
                     // Set is editing
                     isEdit = true;
                 } else {
+                    // Change the text fields to the new text
+                    combineFields();
+
                     // Set visibility for fields
                     setTextFieldsVisibility(View.VISIBLE);
                     setEditFieldsVisibility(View.GONE);
+
                     // Hide the actionbar menu
                     showMenu(false);
 
@@ -339,5 +378,47 @@ public class DrinkDetail extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    private void combineFields() {
+        txtTitle.setText(txtTitleEdit.getText().toString());
+        txtDescription.setText(txtDescriptionEdit.getText().toString());
+        txtRating.setText(txtRatingEdit.getText().toString());
+    }
+
+    private void saveDrink() {
+        if(!hasChanged && !hasImageChanged) {
+            return;
+        }
+
+        currentDrink.setTitle(txtTitle.getText().toString());
+        currentDrink.setDescription(txtDescription.getText().toString());
+        currentDrink.setRating(Double.valueOf(txtRating.getText().toString()));
+
+        if (isNew) {
+            // Establish a new data class
+            Location location = Locator.getLocation();
+
+            String locationString = "";
+            if (location != null) {
+                locationString = String.valueOf(location.getLatitude()) + ", " + String.valueOf(location.getLongitude());
+            }
+
+            currentDrink.setLocation(locationString);
+        }
+
+        String key;
+        if (currentDrink.getId() != null) {
+            key = FirebaseData.setDrink(currentDrink, currentDrink.getId());
+        } else {
+            key = FirebaseData.setDrink(currentDrink, null);
+        }
+
+        if (image != null) {
+            FirebaseData.setImage(key, image);
+            //Uri imageUri = FileProvider.getUriForFile(getContext(),getActivity().getPackageName() + ".fileprovider", imageFile);
+            //FirebaseData.setImage(key, imageUri);
+        }
+
     }
 }
