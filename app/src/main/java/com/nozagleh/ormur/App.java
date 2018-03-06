@@ -206,6 +206,8 @@ public class App extends AppCompatActivity implements DrinkFragment.OnListFragme
         drinkDetails.putExtra("location", item.getLocation());
         drinkDetails.putExtra("rating", item.getRating());
 
+        drinkDetails.putExtra("imge", item.getImageBytes());
+
         startActivity(drinkDetails);
     }
 
