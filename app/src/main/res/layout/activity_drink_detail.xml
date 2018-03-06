@@ -26,6 +26,16 @@
         android:src="@drawable/ic_insert_photo_white_24px"
         app:layout_constraintTop_toBottomOf="@id/detailsToolbar" />
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Lorem ipsum"
+        app:layout_constraintTop_toTopOf="@id/imgDrink"
+        android:gravity="center"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/imgDrink" />
+
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/editButton"
         android:layout_width="wrap_content"
@@ -86,7 +96,7 @@
             android:layout_height="wrap_content"
             android:layout_alignParentStart="true"
             android:textStyle="italic"
-            android:inputType="number"
+            android:inputType="numberDecimal"
             android:layout_marginBottom="20dp"
             android:hint="@string/txt_rating"
             android:textSize="@dimen/text_rating_size"
