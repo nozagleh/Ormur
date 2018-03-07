@@ -11,16 +11,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
-import android.widget.TextView;
 
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
@@ -31,13 +27,12 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class App extends AppCompatActivity implements DrinkFragment.OnListFragmentInteractionListener, AddDrink.OnFragmentInteractionListener {
+public class App extends AppCompatActivity implements DrinkFragment.OnListFragmentInteractionListener {
     private static String ACTIVITY_TAG = "App";
 
     public static String STORAGE = "AppStorage";
     public static String USER_KEY = "userKey";
 
-    private AddDrink addDrinkFragment;
     private DrinkFragment drinkListFragment;
 
     private SharedPreferences sharedPreferences;
@@ -62,7 +57,6 @@ public class App extends AppCompatActivity implements DrinkFragment.OnListFragme
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_app);
 
-        addDrinkFragment = new AddDrink();
         drinkListFragment = new DrinkFragment();
 
         //fragmentTransaction = getSupportFragmentManager().beginTransaction();
@@ -91,8 +85,6 @@ public class App extends AppCompatActivity implements DrinkFragment.OnListFragme
                         }
                         return true;
                     case "Delete":
-                        AddDrink addDrink = (AddDrink) getSupportFragmentManager().findFragmentById(R.id.content);
-                        addDrink.removeDrink();
                         return true;
                 }
 
@@ -158,10 +150,6 @@ public class App extends AppCompatActivity implements DrinkFragment.OnListFragme
                     fragmentTransaction.replace(R.id.content, drinkListFragment).addToBackStack(null).commit();
                     return true;
                 case R.id.navigation_dashboard:
-                    fragmentTransaction = getSupportFragmentManager().beginTransaction();
-                    //fragmentTransaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left);
-                    fragmentTransaction.replace(R.id.content, addDrinkFragment).addToBackStack(null).commit();
-
                     Intent drinkDetails = new Intent(getApplicationContext(), DrinkDetail.class);
                     drinkDetails.putExtra("isNew",true);
 
@@ -176,21 +164,9 @@ public class App extends AppCompatActivity implements DrinkFragment.OnListFragme
 
     };
 
-    /**
-     * On long click fragment interaction, a link between the activity -> fragment -> list.
-     *
-     * When a list item is clicked, the action is sent to the fragment holding the list,
-     * then passed on to the parent activity(this) for further development.
-     *
-     * @param item List item being long clicked
-     */
     @Override
     public void onListFragmentInteraction(Drink item) {
-        AddDrink addDrink = AddDrink.newInstance(item);
 
-        fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        //fragmentTransaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left);
-        fragmentTransaction.replace(R.id.content,addDrink).addToBackStack(null).commit();
     }
 
     /**
@@ -220,24 +196,6 @@ public class App extends AppCompatActivity implements DrinkFragment.OnListFragme
     public void setAppBarSearch() {
         toolbar.getMenu().clear();
         getMenuInflater().inflate(R.menu.bar, toolbar.getMenu());
-    }
-
-    @Override
-    public void addDrinkEditDrink() {
-        toolbar.getMenu().clear();
-        getMenuInflater().inflate(R.menu.bar_delete, toolbar.getMenu());
-    }
-
-    @Override
-    public void doneAddingDrink(String message) {
-        getSupportFragmentManager().popBackStack();
-
-        fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        //fragmentTransaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left);
-        fragmentTransaction.replace(R.id.content,drinkListFragment).addToBackStack(null).commit();
-
-        Snackbar snackbar = Snackbar.make(findViewById(R.id.content),message, Snackbar.LENGTH_LONG);
-        snackbar.show();
     }
 
     private void resetList() {
