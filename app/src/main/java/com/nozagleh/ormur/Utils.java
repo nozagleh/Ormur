@@ -77,7 +77,7 @@ public class Utils {
         return File.createTempFile(prefix, suffix, tempDirectory);
     }
 
-    private void showSnackBar(View view, String message) {
+    public static void showSnackBar(View view, String message) {
         Snackbar snack = Snackbar.make(view, message, Snackbar.LENGTH_LONG);
         snack.show();
     }
