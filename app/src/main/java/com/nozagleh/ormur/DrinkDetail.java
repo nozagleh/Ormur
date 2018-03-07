@@ -32,6 +32,7 @@ import android.widget.TextView;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.storage.StorageException;
 import com.nozagleh.ormur.Models.Drink;
 
 import org.w3c.dom.Text;
@@ -400,9 +401,14 @@ public class DrinkDetail extends AppCompatActivity {
         }, new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
-                // Show a snackbar on failure
-                Snackbar snackbarFail = Snackbar.make(findViewById(R.id.drinkDetails),"Failed to fetch image",Snackbar.LENGTH_SHORT);
-                snackbarFail.show();
+                // Get the HTTP response code
+                int httpResponseCode = ((StorageException) e).getHttpResultCode();
+
+                // Show a snackbar on failure, not 404
+                if (httpResponseCode != 404) {
+                    Snackbar snackbarFail = Snackbar.make(findViewById(R.id.drinkDetails),"Failed to fetch image",Snackbar.LENGTH_SHORT);
+                    snackbarFail.show();
+                }
             }
         });
     }
