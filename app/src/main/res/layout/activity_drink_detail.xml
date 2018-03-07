@@ -27,9 +27,12 @@
         app:layout_constraintTop_toBottomOf="@id/detailsToolbar" />
 
     <TextView
+        android:id="@+id/txtImageAddHint"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Lorem ipsum"
+        android:text="@string/txt_change_image"
+        android:textSize="@dimen/text_size"
+        android:background="@drawable/bg_round_transparent"
         app:layout_constraintTop_toTopOf="@id/imgDrink"
         android:gravity="center"
         app:layout_constraintStart_toStartOf="parent"

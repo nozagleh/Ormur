@@ -161,6 +161,11 @@ public class App extends AppCompatActivity implements DrinkFragment.OnListFragme
                     fragmentTransaction = getSupportFragmentManager().beginTransaction();
                     //fragmentTransaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left);
                     fragmentTransaction.replace(R.id.content, addDrinkFragment).addToBackStack(null).commit();
+
+                    Intent drinkDetails = new Intent(getApplicationContext(), DrinkDetail.class);
+                    drinkDetails.putExtra("isNew",true);
+
+                    startActivity(drinkDetails);
                     return true;
                 case R.id.navigation_notifications:
                     //getSupportFragmentManager().beginTransaction().add(R.id.content, addDrink).commit();

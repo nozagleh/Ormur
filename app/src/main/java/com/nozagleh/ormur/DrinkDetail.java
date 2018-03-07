@@ -1,14 +1,19 @@
 package com.nozagleh.ormur;
 
+import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
+import android.net.Uri;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -31,6 +36,7 @@ import com.nozagleh.ormur.Models.Drink;
 
 import org.w3c.dom.Text;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,9 +56,13 @@ public class DrinkDetail extends AppCompatActivity {
     Drink currentDrink;
     // Drink image
     Bitmap image;
+    // Drink image URI
+    Uri imageURI;
 
     // Display fields
     ImageView imageView;
+    // Image view change hint
+    TextView txtImageHint;
 
     // Text fields list
     List<TextView> textFields;
@@ -83,6 +93,9 @@ public class DrinkDetail extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_drink_detail);
 
+        // Check if the intent is for a new item
+        getIsNew();
+
         // Set the toolbar
         setupToolbar();
 
@@ -95,14 +108,17 @@ public class DrinkDetail extends AppCompatActivity {
         // Init the text views
         initTextFields();
 
+        // Set the floating button
+        setupEditButton();
+
         // Set the fields visibility
         setFieldsVisibility();
 
+        // Prepare the image changer based on is new boolean
+        prepareImageChange(isNew);
+
         // Set the text details
         setDetails();
-
-        // Set the floating button
-        setupEditButton();
     }
 
     /**
@@ -121,11 +137,17 @@ public class DrinkDetail extends AppCompatActivity {
         inflater.inflate(R.menu.bar_save, menu);
 
         // Hide menu by default
-        showMenu(false);
+        showMenu(isNew);
 
         return true;
     }
 
+    /**
+     * On app bar menu item selected.
+     *
+     * @param item MenuItem
+     * @return Boolean if item clicked was found
+     */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.app_bar_save) {
@@ -134,8 +156,9 @@ public class DrinkDetail extends AppCompatActivity {
             return true;
         } else if (item.getItemId() == R.id.app_bar_delete) {
             // Remove the current drink
-            FirebaseData.removeDrink(currentDrink.getId());
-
+            if (!isNew) {
+                FirebaseData.removeDrink(currentDrink.getId());
+            }
             // Finish the activity
             this.finish();
             return true;
@@ -144,6 +167,11 @@ public class DrinkDetail extends AppCompatActivity {
         return false;
     }
 
+    /**
+     * Return a TextWatcher to watch for changes in various text fields.
+     *
+     * @return TextWatcher
+     */
     private TextWatcher onTextChange() {
         return new TextWatcher() {
             @Override
@@ -158,9 +186,33 @@ public class DrinkDetail extends AppCompatActivity {
 
             @Override
             public void afterTextChanged(Editable editable) {
+                // Set the state of change to has changed
                 hasChanged = true;
             }
         };
+    }
+
+    /**
+     * Return a new onClick listener for when the image is going to be changed.
+     *
+     * @return OnClickListener Listens for clicks for items bound to the listener
+     */
+    private View.OnClickListener onImageCLick() {
+        return new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                initiateCamera();
+            }
+        };
+    }
+
+    /**
+     * Get the boolean to check if a new item is being added with the current intent.
+     */
+    private void getIsNew() {
+        Intent intent = getIntent();
+
+        isNew = intent.getBooleanExtra("isNew",false);
     }
 
     /**
@@ -222,6 +274,7 @@ public class DrinkDetail extends AppCompatActivity {
         txtDescriptionEdit = findViewById(R.id.txtDescriptionEdit);
         txtRatingEdit = findViewById(R.id.txtRatingEdit);
 
+        // Add on text change listeners
         txtTitleEdit.addTextChangedListener(onTextChange());
         txtDescriptionEdit.addTextChangedListener(onTextChange());
         txtRatingEdit.addTextChangedListener(onTextChange());
@@ -241,10 +294,15 @@ public class DrinkDetail extends AppCompatActivity {
         // Set the list
         textFields = new ArrayList<>();
 
+        // Bind content fields
         txtTitle = findViewById(R.id.txtTitle);
         txtDescription = findViewById(R.id.txtDescription);
         txtRating = findViewById(R.id.txtRating);
 
+        // Bind image hint field
+        txtImageHint = findViewById(R.id.txtImageAddHint);
+
+        // Add the content fields to a list
         textFields.add(txtTitle);
         textFields.add(txtDescription);
         textFields.add(txtRating);
@@ -256,15 +314,22 @@ public class DrinkDetail extends AppCompatActivity {
      */
     private void setFieldsVisibility() {
         if (isNew || isEdit) {
+            // Set the visibility of the text and edit fields
             setTextFieldsVisibility(View.GONE);
             setEditFieldsVisibility(View.VISIBLE);
 
+            prepareImageChange(true);
+
+            // Hide the edit button if the item is new
             if (isNew) {
                 editButton.setVisibility(View.GONE);
             }
         } else {
+            // Set the visibility of the text and edit fields
             setEditFieldsVisibility(View.GONE);
             setTextFieldsVisibility(View.VISIBLE);
+
+            prepareImageChange(false);
         }
     }
 
@@ -353,31 +418,141 @@ public class DrinkDetail extends AppCompatActivity {
         editButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (!isEdit) {
-                    // Set visibility for fields
-                    setTextFieldsVisibility(View.GONE);
-                    setEditFieldsVisibility(View.VISIBLE);
-                    // Show the actionbar menu
-                    showMenu(true);
-
-                    // Set is editing
-                    isEdit = true;
-                } else {
-                    // Change the text fields to the new text
-                    combineFields();
-
-                    // Set visibility for fields
-                    setTextFieldsVisibility(View.VISIBLE);
-                    setEditFieldsVisibility(View.GONE);
-
-                    // Hide the actionbar menu
-                    showMenu(false);
-
-                    // Set is editing
-                    isEdit = false;
-                }
+                setIsEditing();
             }
         });
+    }
+
+    private void setIsEditing() {
+        if (!isEdit) {
+            // Set visibility for fields
+            setTextFieldsVisibility(View.GONE);
+            setEditFieldsVisibility(View.VISIBLE);
+
+            // Show the actionbar menu
+            showMenu(true);
+
+            // Prepare image view for change of image
+            prepareImageChange(true);
+
+            // Set is editing
+            isEdit = true;
+        } else {
+            // Change the text fields to the new text
+            combineFields();
+
+            // Set visibility for fields
+            setTextFieldsVisibility(View.VISIBLE);
+            setEditFieldsVisibility(View.GONE);
+
+            // Hide the actionbar menu
+            showMenu(false);
+
+            // Disable changing of image in the imageview
+            prepareImageChange(false);
+
+            // Set is editing
+            isEdit = false;
+        }
+    }
+
+    /**
+     * Initiate a camera intent. Setting a URI to watch for changes, which will allow
+     * for fetching of the image from a temporary local file.
+     */
+    private void initiateCamera() {
+        // Create a new camera intent
+        Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
+        // Check if the activity resolves
+        if ( cameraIntent.resolveActivity(getPackageManager()) != null ) {
+            try {
+                // Create a temporary file
+                File imageFile;
+
+                // Create the actual file
+                imageFile = Utils.createTempImageFile("image",".jpg", this);
+                // Run a delete on the file
+                imageFile.delete();
+
+                // Set the URI for the file
+                imageURI = FileProvider.getUriForFile(this,getPackageName() + ".fileprovider",imageFile);
+
+                // Add the URI to the extras for the camera intent
+                cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageURI);
+
+                // Start the camera activity
+                startActivityForResult(cameraIntent, Utils.IMAGE_CAPTURE);
+            } catch (Exception e) {
+                // Log a creation error
+                Log.d(TAG, "Could not create image file");
+                // Ask for storage permissions
+                Permissions.askStorage(this);
+            }
+        }
+    }
+
+    /**
+     * Set on activity results for different results returned from an activity.
+     *
+     * @param requestCode Request code used
+     * @param resultCode Result code sent back
+     * @param data The data sent back
+     */
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if ( requestCode == Utils.IMAGE_CAPTURE && resultCode == Activity.RESULT_OK ) {
+            hasImageChanged = true;
+            setImage();
+        }
+    }
+
+    private void setImage() {
+        // Set a content resolver notifier
+        this.getContentResolver().notifyChange(imageURI, null);
+        ContentResolver contentResolver = this.getContentResolver();
+
+        // Create a temporary image
+        Bitmap tempImage;
+
+        try {
+            // Get the image from URI
+            tempImage = android.provider.MediaStore.Images.Media.getBitmap(contentResolver, imageURI);
+            // Get the correct size for the image
+            tempImage = Utils.getImageSize(tempImage, Utils.ImageSizes.LARGE);
+
+            if (tempImage != null) {
+                // Set the image to the local Bitmap
+                image = tempImage;
+                // Change the image in the imageView
+                imageView.setImageBitmap(image);
+            }
+
+        } catch (Exception e) {
+            // Log if an error occurred
+            Log.d(TAG, "Failed to load image");
+        }
+    }
+
+    /**
+     * Prepare for the image change.
+     *
+     * Shows or hides the image hint text and sets a on image, or textview click listener
+     * for changing the current image.
+     *
+     * @param imageChanging
+     */
+    private void prepareImageChange(Boolean imageChanging) {
+        if (imageChanging) {
+            txtImageHint.setVisibility(View.VISIBLE);
+            txtImageHint.setOnClickListener(onImageCLick());
+            imageView.setOnClickListener(onImageCLick());
+
+        } else {
+            txtImageHint.setVisibility(View.GONE);
+            txtImageHint.setOnClickListener(null);
+            imageView.setOnClickListener(null);
+        }
     }
 
     private void combineFields() {
@@ -420,5 +595,6 @@ public class DrinkDetail extends AppCompatActivity {
             //FirebaseData.setImage(key, imageUri);
         }
 
+        setIsEditing();
     }
 }
