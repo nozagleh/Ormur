@@ -41,4 +41,5 @@
     <!-- Errors -->
     <string name="add_error">Please fill <b>all</b> fields</string>
     <string name="list_error">Could not fetch data</string>
+    <string name="login_error">Could not login</string>
 </resources>

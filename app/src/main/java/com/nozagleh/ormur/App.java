@@ -60,16 +60,24 @@ public class App extends AppCompatActivity {
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
     }
 
+    /**
+     * Initiate the recycler view in the activity.
+     */
     private void initRecycler() {
+        // Locate the recycler
         mRecyclerView = findViewById(R.id.list);
 
+        // Add a linear layout and set it as the layout manager for the recycler view
         mLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(mLayoutManager);
 
+        // Only bind the adapter if the list is not empty
         if (listOfDrinks.size() > 0) {
+            // Set the list adapter
             mAdapter = setListAdapter();
             mRecyclerView.setAdapter(mAdapter);
 
+            // Return before fetching list since it has been populated
             return;
         }
 
@@ -118,15 +126,24 @@ public class App extends AppCompatActivity {
         });
     }
 
+    /**
+     * Set a list adapter to the recycler view.
+     *
+     * @return Instance of the drink recycler adapter, used for callbacks
+     */
     private DrinkRecyclerViewAdapter setListAdapter() {
         return new DrinkRecyclerViewAdapter(listOfDrinks, new App.OnListFragmentInteractionListener() {
             @Override
             public void onListFragmentInteractionClick(Drink item) {
+                // Call for opening of detailed view on item click
                 openDrinkDetails(item);
             }
         });
     }
 
+    /**
+     * Handle bottom navigation clicks
+     */
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
 
@@ -134,36 +151,65 @@ public class App extends AppCompatActivity {
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
             switch (item.getItemId()) {
                 case R.id.navigation_home:
+                    // Do nothing on list click, since the activity will always have the list
                     return true;
                 case R.id.navigation_dashboard:
+                    // Call for an empty drink details view to be started
+                    // For adding a new drink
                     Intent drinkDetails = new Intent(getApplicationContext(), DrinkDetail.class);
+
+                    // Notify the intent activity that a new drink is being added
                     drinkDetails.putExtra("isNew",true);
 
+                    // Start the activity
                     startActivity(drinkDetails);
+
+                    // Return that an object was found
                     return true;
                 case R.id.navigation_notifications:
-                    // Nothing here yet
+                    // Nothing here
                     return true;
             }
+
+            // No item was found
             return false;
         }
 
     };
 
+    /**
+     * Open a detailed view of a drink item.
+     *
+     * Creates an intent for the DrinkDetails activity, with the needed
+     * data added as extras to the intent.
+     *
+     * @param item The drink item
+     */
     private void openDrinkDetails(Drink item) {
+        // Create a new intent
         Intent drinkDetails = new Intent(this, DrinkDetail.class);
 
+        // Put all the drink details into the intent extras
         drinkDetails.putExtra("id", item.getId());
         drinkDetails.putExtra("title", item.getTitle());
         drinkDetails.putExtra("description", item.getDescription());
         drinkDetails.putExtra("location", item.getLocation());
         drinkDetails.putExtra("rating", item.getRating());
 
+        // Put the image in the extras
         drinkDetails.putExtra("imge", item.getImageBytes());
 
+        // Start the activity
         startActivity(drinkDetails);
     }
 
+    /**
+     * Override on request permission results.
+     *
+     * @param requestCode
+     * @param permissions
+     * @param grantResults
+     */
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);

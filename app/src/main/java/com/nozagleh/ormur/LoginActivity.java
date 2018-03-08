@@ -24,10 +24,14 @@ import com.google.firebase.auth.GoogleAuthProvider;
 public class LoginActivity extends AppCompatActivity {
     private static String TAG = LoginActivity.class.getName();
 
+    // Create a static number callback for the Google sign in
     private static int RC_SIGN_IN = 12;
 
+    // Define a Google sign in client
     private GoogleSignInClient gsc;
+    // Define a Google sign in button
     private SignInButton googleSignIn;
+    // Define the Firebase authenticator
     private FirebaseAuth firebaseAuth;
 
     @Override
@@ -35,10 +39,14 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
+        // Get a Fiebase authentication instance
         firebaseAuth = FirebaseAuth.getInstance();
 
+        // Add the Google sign in button to the view
         googleSignIn = findViewById(R.id.sign_in_button);
+        // Set the size of the Google sign in button
         googleSignIn.setSize(SignInButton.SIZE_WIDE);
+        // Set an on click listener for the Google sign in button
         googleSignIn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -47,18 +55,23 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
+        // Get the google sign in option
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
                 .build();
+
+        // Get a Google sign in client
         gsc = GoogleSignIn.getClient(this, gso);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-
+        // Get the current user firebase user
         FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+
+        // Check if there is a user signed in or not
         isSignedIn(currentUser);
     }
 
@@ -77,6 +90,11 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Authenticate the Google user on the Firebase backend.
+     *
+     * @param account Google account
+     */
     private void firebaseAuthentication(GoogleSignInAccount account) {
         AuthCredential credential = GoogleAuthProvider.getCredential(account.getIdToken(), null);
         firebaseAuth.signInWithCredential(credential)
@@ -84,20 +102,33 @@ public class LoginActivity extends AppCompatActivity {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isComplete()) {
+                            // Get the current user
                             FirebaseUser user = firebaseAuth.getCurrentUser();
+                            // Check if there is any user signed in
                             isSignedIn(user);
                         } else {
-                            // TODO display failed signin
+                            // Send null to the sign in checker on failure
                             isSignedIn(null);
                         }
                     }
                 });
     }
 
+    /**
+     * Check if a user is signed in and authenicated.
+     *
+     * @param user Firebase user
+     */
     private void isSignedIn(FirebaseUser user) {
+        // Only start the main activity if the user was authenticated
         if (user != null) {
+            // Create a new main app class intent
             Intent intent = new Intent(this, App.class);
+            // Start the activity from the intent
             startActivity(intent);
+        } else {
+            // Show a snackbar on failure
+            Utils.showSnackBar(findViewById(R.id.loginContent), getString(R.string.login_error));
         }
     }
 }
