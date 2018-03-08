@@ -6,10 +6,13 @@ import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
+import android.support.design.widget.Snackbar;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -18,6 +21,7 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.StorageException;
 import com.nozagleh.ormur.Models.Drink;
 
 import java.util.ArrayList;
@@ -33,6 +37,7 @@ public class App extends AppCompatActivity {
     private RecyclerView mRecyclerView;
     private RecyclerView.Adapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
+    private SwipeRefreshLayout mSwipeRefreshLayout;
 
     // The local list of drinks
     private List<Drink> listOfDrinks;
@@ -54,10 +59,22 @@ public class App extends AppCompatActivity {
         listOfDrinks = new ArrayList<>();
 
         initRecycler();
-        getImages();
+        //getImages();
 
         BottomNavigationView navigation = findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
+    }
+
+    private void initSwipeToRefresh() {
+        mSwipeRefreshLayout = findViewById(R.id.swipeRefresh);
+        mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                // Repopulate the drink list on refresh
+                getDrinks(true);
+                mSwipeRefreshLayout.setRefreshing(false);
+            }
+        });
     }
 
     /**
@@ -81,47 +98,95 @@ public class App extends AppCompatActivity {
             return;
         }
 
+        // Init the swipe to refresh funcion
+        initSwipeToRefresh();
+
+        // Populate the list
+        getDrinks(false);
+    }
+
+    private void getDrinks(final Boolean isRefreshing) {
         FirebaseData.getDrinks(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                // Loop through all the drinks returned from the database
-                for (DataSnapshot data:dataSnapshot.getChildren()) {
-                    // Create a new drink object
-                    Drink drink = new Drink();
+           @Override
+           public void onDataChange(DataSnapshot dataSnapshot) {
+               // Loop through all the drinks returned from the database
+               for (DataSnapshot data : dataSnapshot.getChildren()) {
+                   // Create a new drink object
+                   Drink drink = new Drink();
 
-                    // Get title first so we can check the value
-                    drink.setTitle((String) data.child("title").getValue());
+                   // Get title first so we can check the value
+                   drink.setTitle((String) data.child("title").getValue());
 
-                    // Set the drink values
-                    drink.setId(data.getKey());
-                    drink.setDescription((String) data.child("description").getValue());
-                    drink.setLocation((String) data.child("location").getValue());
+                   // Set the drink values
+                   drink.setId(data.getKey());
+                   drink.setDescription((String) data.child("description").getValue());
+                   drink.setLocation((String) data.child("location").getValue());
 
-                    // Check if rating comes as long or double
-                    if (data.child("rating").getValue() instanceof Long) {
-                        // Get the long value
-                        Long ratingLong = (long) data.child("rating").getValue();
-                        // Convert the rating to double
-                        drink.setRating(ratingLong.doubleValue());
-                    } else if (data.child("rating").getValue() instanceof Double) {
-                        // Cast the rating to double and set the drink rating
-                        drink.setRating((double) data.child("rating").getValue());
-                    }
+                   // Check if rating comes as long or double
+                   if (data.child("rating").getValue() instanceof Long) {
+                       // Get the long value
+                       Long ratingLong = (long) data.child("rating").getValue();
+                       // Convert the rating to double
+                       drink.setRating(ratingLong.doubleValue());
+                   } else if (data.child("rating").getValue() instanceof Double) {
+                       // Cast the rating to double and set the drink rating
+                       drink.setRating((double) data.child("rating").getValue());
+                   }
+                    // Add the drink to the list
+                   listOfDrinks.add(drink);
 
-                    listOfDrinks.add(drink);
-                }
+                   getImage(listOfDrinks.size() - 1);
+               }
 
-                if(mAdapter == null) {
-                    mAdapter = setListAdapter();
-                    mRecyclerView.setAdapter(mAdapter);
-                } else {
-                    mAdapter.notifyDataSetChanged();
-                }
-            }
+               if(isRefreshing)
+                   mSwipeRefreshLayout.setRefreshing(false);
 
+               if (mAdapter == null) {
+                   mAdapter = setListAdapter();
+                   mRecyclerView.setAdapter(mAdapter);
+               } else {
+                   mAdapter.notifyDataSetChanged();
+               }
+           }
             @Override
             public void onCancelled(DatabaseError databaseError) {
                 Utils.showSnackBar(findViewById(R.id.container),getString(R.string.list_error));
+            }
+        });
+    }
+
+    /**
+     * Get image for a single drink item.
+     *
+     * After fetching the image, the image is added to the respective
+     * item that it belongs to.
+     *
+     * @param location The location of the item in the list of items
+     */
+    private void getImage(final int location) {
+        FirebaseData.getImage(listOfDrinks.get(location).getId(), new OnSuccessListener<byte[]>() {
+            @Override
+            public void onSuccess(byte[] bytes) {
+                if (bytes != null) {
+                    Bitmap image = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+
+                    listOfDrinks.get(location).setImageBytes(bytes);
+                    listOfDrinks.get(location).setImage(Utils.getImageSize(image, Utils.ImageSizes.LARGE));
+
+                    mAdapter.notifyDataSetChanged();
+                }
+            }
+        }, new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                // Get the HTTP response code
+                int httpResponseCode = ((StorageException) e).getHttpResultCode();
+
+                // Show a snackbar on failure, not 404
+                if (httpResponseCode != 404) {
+                    Snackbar snackbarFail = Snackbar.make(findViewById(R.id.drinkDetails),getString(R.string.image_error),Snackbar.LENGTH_SHORT);
+                    snackbarFail.show();
+                }
             }
         });
     }
@@ -196,9 +261,6 @@ public class App extends AppCompatActivity {
         drinkDetails.putExtra("location", item.getLocation());
         drinkDetails.putExtra("rating", item.getRating());
 
-        // Put the image in the extras
-        drinkDetails.putExtra("imge", item.getImageBytes());
-
         // Start the activity
         startActivity(drinkDetails);
     }
@@ -213,77 +275,6 @@ public class App extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-    }
-
-    /**
-     * Get the list of drinks.
-     */
-    private void getList() {
-        FirebaseData.getDrinks(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                // Create a new list of drinks
-                List<Drink> currentDrinkList = new ArrayList<>();
-
-                // Loop through all the drinks returned from the database
-                for (DataSnapshot data:dataSnapshot.getChildren()) {
-                    // Create a new drink object
-                    Drink drink = new Drink();
-
-                    // Get title first so we can check the value
-                    drink.setTitle((String) data.child("title").getValue());
-
-                    // Set the drink values
-                    drink.setId(data.getKey());
-                    drink.setDescription((String) data.child("description").getValue());
-                    drink.setLocation((String) data.child("location").getValue());
-
-                    // Check if rating comes as long or double
-                    if (data.child("rating").getValue() instanceof Long) {
-                        // Get the long value
-                        Long ratingLong = (long) data.child("rating").getValue();
-                        // Convert the rating to double
-                        drink.setRating(ratingLong.doubleValue());
-                    } else if (data.child("rating").getValue() instanceof Double) {
-                        // Cast the rating to double and set the drink rating
-                        drink.setRating((double) data.child("rating").getValue());
-                    }
-
-                    currentDrinkList.add(drink);
-                }
-                listOfDrinks = currentDrinkList;
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                Utils.showSnackBar(findViewById(R.id.container),getString(R.string.list_error));
-            }
-        });
-    }
-
-    /**
-     * Get the list item images.
-     */
-    private void getImages() {
-        for(int i = 0; i < listOfDrinks.size(); i++) {
-            final int nr = i;
-            FirebaseData.getImage(listOfDrinks.get(i).getId(), new OnSuccessListener<byte[]>() {
-                @Override
-                public void onSuccess(byte[] bytes) {
-                    if (bytes != null) {
-                        Bitmap image = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-
-                        listOfDrinks.get(nr).setImage(Utils.getImageSize(image, Utils.ImageSizes.LARGE));
-
-                    }
-                }
-            }, new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception e) {
-                    Utils.showSnackBar(findViewById(R.id.container), getString(R.string.list_error));
-                }
-            });
-        }
     }
 
     /**

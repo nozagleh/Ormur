@@ -20,6 +20,7 @@ public class Drink {
     private String description;
     private String location;
     private Bitmap image;
+    private byte[] imageBytes;
 
     public Drink() {
         //this.id = -1;
@@ -84,7 +85,17 @@ public class Drink {
     }
 
     @Exclude
+    public void setImageBytes(byte[] imageBytes) {
+        this.imageBytes = imageBytes;
+    }
+
+    @Exclude
     public byte[] getImageBytes() {
+        return this.imageBytes;
+    }
+
+    @Exclude
+    public byte[] convertImageToBytes() {
         if (image != null) {
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
             image.compress(Bitmap.CompressFormat.JPEG, 100, stream);

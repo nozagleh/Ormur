@@ -51,8 +51,9 @@ public class DrinkRecyclerViewAdapter extends RecyclerView.Adapter<DrinkRecycler
         holder.mIdView.setText(mDrinks.get(position).getTitle());
         holder.mContentView.setText(mDrinks.get(position).getDescription());
         holder.mRating.setText(String.valueOf(mDrinks.get(position).getRating()));
+        holder.mImage.setImageBitmap(holder.mItem.getImage());
 
-        if (holder.mItem.getImage() == null) {
+        /*if (holder.mItem.getImage() == null) {
             FirebaseData.getImage(mDrinks.get(position).getId(), new OnSuccessListener<byte[]>() {
                 @Override
                 public void onSuccess(byte[] bytes) {
@@ -77,7 +78,7 @@ public class DrinkRecyclerViewAdapter extends RecyclerView.Adapter<DrinkRecycler
             });
         } else {
             holder.mImage.setImageBitmap(holder.mItem.getImage());
-        }
+        }*/
 
         holder.mView.setOnClickListener(new View.OnClickListener() {
             @Override
