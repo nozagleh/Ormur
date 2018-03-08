@@ -1,22 +1,20 @@
 package com.nozagleh.ormur;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.EditText;
-import android.widget.RelativeLayout;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
@@ -24,26 +22,19 @@ import com.nozagleh.ormur.Models.Drink;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-public class App extends AppCompatActivity implements DrinkFragment.OnListFragmentInteractionListener {
+public class App extends AppCompatActivity {
     private static String ACTIVITY_TAG = "App";
 
-    public static String STORAGE = "AppStorage";
-    public static String USER_KEY = "userKey";
-
-    private DrinkFragment drinkListFragment;
-
-    private SharedPreferences sharedPreferences;
-
+    // Activity toolbar
     private Toolbar toolbar;
 
-    private FragmentTransaction fragmentTransaction;
+    // Setup the recyclerview
+    private RecyclerView mRecyclerView;
+    private RecyclerView.Adapter mAdapter;
+    private RecyclerView.LayoutManager mLayoutManager;
 
-    private RelativeLayout searchBlock;
-    private EditText searchText;
-
+    // The local list of drinks
     private List<Drink> listOfDrinks;
 
     @Override
@@ -57,81 +48,83 @@ public class App extends AppCompatActivity implements DrinkFragment.OnListFragme
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_app);
 
-        drinkListFragment = new DrinkFragment();
-
-        //fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        //fragmentTransaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left);
-
-        toolbar = (Toolbar) findViewById(R.id.toolBar);
+        toolbar = findViewById(R.id.toolBar);
         setSupportActionBar(toolbar);
 
-        toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                switch (item.toString()) {
-                    case "Search":
-                        if (searchBlock.getVisibility() == View.GONE) {
-                            if (searchText.length() > 0) {
-                                searchTextChanged(searchText.getText().toString());
-                            }
-                            item.setIcon(R.drawable.ic_close_black_24px);
-                            searchBlock.setVisibility(View.VISIBLE);
+        listOfDrinks = new ArrayList<>();
 
-                        } else {
-                            resetList();
-                            item.setIcon(R.drawable.ic_search_black_24dp);
-                            searchBlock.setVisibility(View.GONE);
+        initRecycler();
+        getImages();
 
-                        }
-                        return true;
-                    case "Delete":
-                        return true;
-                }
+        BottomNavigationView navigation = findViewById(R.id.navigation);
+        navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
+    }
 
-                return false;
-            }
-        });
+    private void initRecycler() {
+        mRecyclerView = findViewById(R.id.list);
 
-        sharedPreferences = getSharedPreferences(STORAGE, 0);
+        mLayoutManager = new LinearLayoutManager(this);
+        mRecyclerView.setLayoutManager(mLayoutManager);
 
-        searchBlock = findViewById(R.id.searchBlock);
-        searchBlock.setVisibility(View.GONE);
+        if (listOfDrinks.size() > 0) {
+            mAdapter = setListAdapter();
+            mRecyclerView.setAdapter(mAdapter);
 
-        searchText = findViewById(R.id.txtSearch);
-        searchText.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-            }
-
-            @Override
-            public void afterTextChanged(Editable editable) {
-                if (editable.length() <= 0) {
-                    resetList();
-                } else {
-                    searchTextChanged(editable.toString());
-                }
-            }
-        });
-
-        getDrinks(false, null);
-
-        if (findViewById(R.id.content) != null) {
-            if (savedInstanceState != null) {
-                return;
-            }
-
-            fragmentTransaction = getSupportFragmentManager().beginTransaction();
-            //fragmentTransaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left);
-            fragmentTransaction.add(R.id.content, drinkListFragment).commit();
+            return;
         }
 
-        BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
-        navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
+        FirebaseData.getDrinks(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                // Loop through all the drinks returned from the database
+                for (DataSnapshot data:dataSnapshot.getChildren()) {
+                    // Create a new drink object
+                    Drink drink = new Drink();
+
+                    // Get title first so we can check the value
+                    drink.setTitle((String) data.child("title").getValue());
+
+                    // Set the drink values
+                    drink.setId(data.getKey());
+                    drink.setDescription((String) data.child("description").getValue());
+                    drink.setLocation((String) data.child("location").getValue());
+
+                    // Check if rating comes as long or double
+                    if (data.child("rating").getValue() instanceof Long) {
+                        // Get the long value
+                        Long ratingLong = (long) data.child("rating").getValue();
+                        // Convert the rating to double
+                        drink.setRating(ratingLong.doubleValue());
+                    } else if (data.child("rating").getValue() instanceof Double) {
+                        // Cast the rating to double and set the drink rating
+                        drink.setRating((double) data.child("rating").getValue());
+                    }
+
+                    listOfDrinks.add(drink);
+                }
+
+                if(mAdapter == null) {
+                    mAdapter = setListAdapter();
+                    mRecyclerView.setAdapter(mAdapter);
+                } else {
+                    mAdapter.notifyDataSetChanged();
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Utils.showSnackBar(findViewById(R.id.container),getString(R.string.list_error));
+            }
+        });
+    }
+
+    private DrinkRecyclerViewAdapter setListAdapter() {
+        return new DrinkRecyclerViewAdapter(listOfDrinks, new App.OnListFragmentInteractionListener() {
+            @Override
+            public void onListFragmentInteractionClick(Drink item) {
+                openDrinkDetails(item);
+            }
+        });
     }
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
@@ -139,15 +132,8 @@ public class App extends AppCompatActivity implements DrinkFragment.OnListFragme
 
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-            // Hide the search block
-            searchBlock.setVisibility(View.GONE);
-
             switch (item.getItemId()) {
                 case R.id.navigation_home:
-                    getSupportFragmentManager().popBackStack();
-                    fragmentTransaction = getSupportFragmentManager().beginTransaction();
-                    //fragmentTransaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left);
-                    fragmentTransaction.replace(R.id.content, drinkListFragment).addToBackStack(null).commit();
                     return true;
                 case R.id.navigation_dashboard:
                     Intent drinkDetails = new Intent(getApplicationContext(), DrinkDetail.class);
@@ -156,7 +142,7 @@ public class App extends AppCompatActivity implements DrinkFragment.OnListFragme
                     startActivity(drinkDetails);
                     return true;
                 case R.id.navigation_notifications:
-                    //getSupportFragmentManager().beginTransaction().add(R.id.content, addDrink).commit();
+                    // Nothing here yet
                     return true;
             }
             return false;
@@ -164,21 +150,7 @@ public class App extends AppCompatActivity implements DrinkFragment.OnListFragme
 
     };
 
-    @Override
-    public void onListFragmentInteraction(Drink item) {
-
-    }
-
-    /**
-     * On click fragment interaction. A link between the activity -> fragment -> list.
-     *
-     * When a list item is clicked, the action is sent to the fragment holding the list,
-     * then passed on to the parent activity(this) for further development.
-     *
-     * @param item Current list item being clicked
-     */
-    @Override
-    public void onListFragmentInteractionClick(Drink item) {
+    private void openDrinkDetails(Drink item) {
         Intent drinkDetails = new Intent(this, DrinkDetail.class);
 
         drinkDetails.putExtra("id", item.getId());
@@ -193,22 +165,19 @@ public class App extends AppCompatActivity implements DrinkFragment.OnListFragme
     }
 
     @Override
-    public void setAppBarSearch() {
-        toolbar.getMenu().clear();
-        getMenuInflater().inflate(R.menu.bar, toolbar.getMenu());
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
-    private void resetList() {
-        DrinkFragment drinkFragment = (DrinkFragment) getSupportFragmentManager().findFragmentById(R.id.content);
-        drinkFragment.refreshList(true);
-    }
-
-    private List<Drink> getDrinks(final Boolean isSearch, final String searchText) {
+    /**
+     * Get the list of drinks.
+     */
+    private void getList() {
         FirebaseData.getDrinks(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 // Create a new list of drinks
-                List<Drink> drinkList = new ArrayList<>();
+                List<Drink> currentDrinkList = new ArrayList<>();
 
                 // Loop through all the drinks returned from the database
                 for (DataSnapshot data:dataSnapshot.getChildren()) {
@@ -234,37 +203,54 @@ public class App extends AppCompatActivity implements DrinkFragment.OnListFragme
                         drink.setRating((double) data.child("rating").getValue());
                     }
 
-                    // Add the drink to the drink list
-                    if (isSearch) {
-                        Pattern searchPattern = Pattern.compile("([\\w\\s])*" + searchText + "([\\w\\s])*");
-                        Matcher matcher = searchPattern.matcher(drink.getTitle().toLowerCase());
-
-                        if (matcher.find()) {
-                            drinkList.add(drink);
-                        }
-                    } else {
-                        drinkList.add(drink);
-                    }
+                    currentDrinkList.add(drink);
                 }
-                listOfDrinks = drinkList;
+                listOfDrinks = currentDrinkList;
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-
+                Utils.showSnackBar(findViewById(R.id.container),getString(R.string.list_error));
             }
         });
-
-        return listOfDrinks;
     }
 
-    private void searchTextChanged(final String searchText) {
-        DrinkFragment drinkFragment = (DrinkFragment) getSupportFragmentManager().findFragmentById(R.id.content);
-        drinkFragment.updateList(getDrinks(true, searchText));
+    /**
+     * Get the list item images.
+     */
+    private void getImages() {
+        for(int i = 0; i < listOfDrinks.size(); i++) {
+            final int nr = i;
+            FirebaseData.getImage(listOfDrinks.get(i).getId(), new OnSuccessListener<byte[]>() {
+                @Override
+                public void onSuccess(byte[] bytes) {
+                    if (bytes != null) {
+                        Bitmap image = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+
+                        listOfDrinks.get(nr).setImage(Utils.getImageSize(image, Utils.ImageSizes.LARGE));
+
+                    }
+                }
+            }, new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    Utils.showSnackBar(findViewById(R.id.container), getString(R.string.list_error));
+                }
+            });
+        }
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    /**
+     * This interface must be implemented by activities that contain this
+     * fragment to allow an interaction in this fragment to be communicated
+     * to the activity and potentially other fragments contained in that
+     * activity.
+     * <p/>
+     * See the Android Training lesson <a href=
+     * "http://developer.android.com/training/basics/fragments/communicating.html"
+     * >Communicating with Other Fragments</a> for more information.
+     */
+    public interface OnListFragmentInteractionListener {
+        void onListFragmentInteractionClick(Drink item);
     }
 }
