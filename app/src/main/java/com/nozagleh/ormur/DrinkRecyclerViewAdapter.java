@@ -18,7 +18,7 @@ import android.widget.TextView;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.nozagleh.ormur.DrinkFragment.OnListFragmentInteractionListener;
+import com.nozagleh.ormur.App.OnListFragmentInteractionListener;
 import com.nozagleh.ormur.Models.Drink;
 
 import java.util.List;
@@ -52,28 +52,32 @@ public class DrinkRecyclerViewAdapter extends RecyclerView.Adapter<DrinkRecycler
         holder.mContentView.setText(mDrinks.get(position).getDescription());
         holder.mRating.setText(String.valueOf(mDrinks.get(position).getRating()));
 
-        FirebaseData.getImage(mDrinks.get(position).getId(), new OnSuccessListener<byte[]>() {
-            @Override
-            public void onSuccess(byte[] bytes) {
-                Bitmap image = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+        if (holder.mItem.getImage() == null) {
+            FirebaseData.getImage(mDrinks.get(position).getId(), new OnSuccessListener<byte[]>() {
+                @Override
+                public void onSuccess(byte[] bytes) {
+                    Bitmap image = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
 
-                if (image != null) {
-                    holder.mImage.setDrawingCacheEnabled(true);
-                    holder.mImage.buildDrawingCache();
+                    if (image != null) {
+                        holder.mImage.setDrawingCacheEnabled(true);
+                        holder.mImage.buildDrawingCache();
 
-                    // Set the image
-                    holder.mImage.setImageBitmap(
-                            Utils.getImageSize(image, Utils.ImageSizes.LARGE)
-                    );
+                        // Set the image
+                        holder.mImage.setImageBitmap(
+                                Utils.getImageSize(image, Utils.ImageSizes.LARGE)
+                        );
+                    }
                 }
-            }
-        }, new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                Log.e(CLASS_TAG, e.getMessage());
-                holder.mImage.setImageResource(R.mipmap.beer);
-            }
-        });
+            }, new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    Log.e(CLASS_TAG, e.getMessage());
+                    holder.mImage.setImageResource(R.mipmap.beer);
+                }
+            });
+        } else {
+            holder.mImage.setImageBitmap(holder.mItem.getImage());
+        }
 
         holder.mView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -83,21 +87,6 @@ public class DrinkRecyclerViewAdapter extends RecyclerView.Adapter<DrinkRecycler
                 }
             }
         });
-
-        holder.mView.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View view) {
-                if (null != mListener) {
-                    // Notify the active callbacks interface (the activity, if the
-                    // fragment is attached to one) that an item has been selected.
-                    mListener.onListFragmentInteraction(holder.mItem);
-
-                    return true;
-                }
-                return false;
-            }
-        });
-
     }
 
     @Override
