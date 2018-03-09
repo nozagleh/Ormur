@@ -1,19 +1,11 @@
 package com.nozagleh.ormur;
 
 import android.content.Intent;
-import android.os.Parcelable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.ValueEventListener;
-import com.nozagleh.ormur.Models.Drink;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class SplashActivity extends AppCompatActivity {
 
