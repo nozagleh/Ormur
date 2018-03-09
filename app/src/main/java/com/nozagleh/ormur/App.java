@@ -12,6 +12,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -42,26 +43,33 @@ public class App extends AppCompatActivity {
     private List<Drink> listOfDrinks;
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.bar, menu);
-        return true;
-    }
-
-    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_app);
 
         toolbar = findViewById(R.id.toolBar);
+        toolbar.setTitleTextColor(getResources().getColor(R.color.colorWhite));
+        toolbar.setNavigationIcon(R.mipmap.ic_launcher_round);
+        toolbar.setBackgroundColor(getResources().getColor(R.color.colorPrimaryDark));
         setSupportActionBar(toolbar);
 
         listOfDrinks = new ArrayList<>();
 
-        initRecycler();
-        //getImages();
-
         BottomNavigationView navigation = findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        listOfDrinks = new ArrayList<>();
+
+        mAdapter = null;
+
+        initRecycler();
+
+        getDrinks(false);
     }
 
     private void initSwipeToRefresh() {
@@ -100,14 +108,14 @@ public class App extends AppCompatActivity {
         initSwipeToRefresh();
 
         // Populate the list
-        getDrinks(false);
+        //getDrinks(false);
     }
 
     private void getDrinks(final Boolean isRefreshing) {
+        final List<Drink> tempList = new ArrayList<>();
         FirebaseData.getDrinks(new ValueEventListener() {
            @Override
            public void onDataChange(DataSnapshot dataSnapshot) {
-               listOfDrinks = new ArrayList<>();
                // Loop through all the drinks returned from the database
                for (DataSnapshot data : dataSnapshot.getChildren()) {
                    // Create a new drink object
@@ -132,13 +140,17 @@ public class App extends AppCompatActivity {
                        drink.setRating((double) data.child("rating").getValue());
                    }
                     // Add the drink to the list
-                   listOfDrinks.add(drink);
-
-                   getImage(listOfDrinks.size() - 1);
+                   tempList.add(drink);
                }
 
-               if(isRefreshing)
+               listOfDrinks = tempList;
+               for (int i = 0; i < tempList.size(); i++) {
+                   getImage(i);
+               }
+
+               if(isRefreshing) {
                    mSwipeRefreshLayout.setRefreshing(false);
+               }
 
                if (mAdapter == null) {
                    mAdapter = setListAdapter();
@@ -146,8 +158,6 @@ public class App extends AppCompatActivity {
                } else {
                    mAdapter.notifyDataSetChanged();
                }
-
-               mSwipeRefreshLayout.setRefreshing(false);
            }
             @Override
             public void onCancelled(DatabaseError databaseError) {

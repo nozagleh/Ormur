@@ -184,6 +184,9 @@ public class DrinkDetail extends AppCompatActivity {
             public void afterTextChanged(Editable editable) {
                 // Set the state of change to has changed
                 hasChanged = true;
+
+                // Set the drink information from the edit fields
+                combineFields();
             }
         };
     }
@@ -527,6 +530,8 @@ public class DrinkDetail extends AppCompatActivity {
                 image = tempImage;
                 // Change the image in the imageView
                 imageView.setImageBitmap(image);
+                // Set the scale type for the imageview
+                imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
             }
 
         } catch (Exception e) {
@@ -556,20 +561,22 @@ public class DrinkDetail extends AppCompatActivity {
         }
     }
 
+    /**
+     * Combine the edit fields with the text fields
+     */
     private void combineFields() {
         txtTitle.setText(txtTitleEdit.getText().toString());
         txtDescription.setText(txtDescriptionEdit.getText().toString());
         txtRating.setText(txtRatingEdit.getText().toString());
     }
 
+    /**
+     * Save the drink being edited or added.
+     */
     private void saveDrink() {
         if(!hasChanged && !hasImageChanged) {
             return;
         }
-
-        currentDrink.setTitle(txtTitle.getText().toString());
-        currentDrink.setDescription(txtDescription.getText().toString());
-        currentDrink.setRating(Double.valueOf(txtRating.getText().toString()));
 
         if (isNew) {
             // Establish a new data class
@@ -580,22 +587,42 @@ public class DrinkDetail extends AppCompatActivity {
                 locationString = String.valueOf(location.getLatitude()) + ", " + String.valueOf(location.getLongitude());
             }
 
+            // Set the drink information from the edit fields
+            combineFields();
+            // Set the location from the fetched location
             currentDrink.setLocation(locationString);
         }
 
+        // Set the drink information based on the text views
+        currentDrink.setTitle(txtTitle.getText().toString());
+        currentDrink.setDescription(txtDescription.getText().toString());
+        currentDrink.setRating(Double.valueOf(txtRating.getText().toString()));
+
+        // Set the drink
         String key;
         if (currentDrink.getId() != null) {
+            // Set drink being edited
             key = FirebaseData.setDrink(currentDrink, currentDrink.getId());
         } else {
+            // Set drink being added
             key = FirebaseData.setDrink(currentDrink, null);
         }
 
+        // If image is not empty, set the image
         if (image != null) {
             FirebaseData.setImage(key, image);
-            //Uri imageUri = FileProvider.getUriForFile(getContext(),getActivity().getPackageName() + ".fileprovider", imageFile);
-            //FirebaseData.setImage(key, imageUri);
         }
 
+        if (isNew) {
+            // Fake that the drink is now being edited
+            isEdit = true;
+            // Setup the edit button for the drink
+            setupEditButton();
+            // Show the edit button
+            editButton.setVisibility(View.VISIBLE);
+        }
+
+        // Set to non editing mode
         setIsEditing();
     }
 }
