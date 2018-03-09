@@ -25,6 +25,7 @@
     <string name="txt_rating_desc">Rating can be given from <b>zero</b> to <b>five</b>\n as well as <i>.5</i> in between</string>
     <string name="txt_add_image">Add image</string>
     <string name="txt_change_image">Click to change</string>
+    <string name="txt_image_desc">Drink image</string>
 
     <!-- App bar texts -->
     <string name="menu_search">Search</string>
