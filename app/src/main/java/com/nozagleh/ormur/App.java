@@ -12,7 +12,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -72,7 +71,6 @@ public class App extends AppCompatActivity {
             public void onRefresh() {
                 // Repopulate the drink list on refresh
                 getDrinks(true);
-                mSwipeRefreshLayout.setRefreshing(false);
             }
         });
     }
@@ -109,6 +107,7 @@ public class App extends AppCompatActivity {
         FirebaseData.getDrinks(new ValueEventListener() {
            @Override
            public void onDataChange(DataSnapshot dataSnapshot) {
+               listOfDrinks = new ArrayList<>();
                // Loop through all the drinks returned from the database
                for (DataSnapshot data : dataSnapshot.getChildren()) {
                    // Create a new drink object
@@ -147,6 +146,8 @@ public class App extends AppCompatActivity {
                } else {
                    mAdapter.notifyDataSetChanged();
                }
+
+               mSwipeRefreshLayout.setRefreshing(false);
            }
             @Override
             public void onCancelled(DatabaseError databaseError) {
@@ -179,6 +180,11 @@ public class App extends AppCompatActivity {
         }, new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
+                Bitmap defaultImage = BitmapFactory.decodeResource(getResources(), R.mipmap.beer);
+                listOfDrinks.get(location).setImage(defaultImage);
+
+                mAdapter.notifyDataSetChanged();
+
                 // Get the HTTP response code
                 int httpResponseCode = ((StorageException) e).getHttpResultCode();
 
