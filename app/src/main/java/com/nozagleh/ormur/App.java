@@ -12,9 +12,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
-import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -52,6 +51,10 @@ public class App extends AppCompatActivity {
         toolbar.setNavigationIcon(R.mipmap.ic_launcher_round);
         toolbar.setBackgroundColor(getResources().getColor(R.color.colorPrimaryDark));
         setSupportActionBar(toolbar);
+
+        if (!Permissions.hasStorage(this)) {
+            Permissions.askStorage(this);
+        }
 
         listOfDrinks = new ArrayList<>();
 
@@ -106,9 +109,20 @@ public class App extends AppCompatActivity {
 
         // Init the swipe to refresh funcion
         initSwipeToRefresh();
+    }
 
-        // Populate the list
-        //getDrinks(false);
+    private void getDrinksPersistently() {
+        FirebaseData.getDrinks(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
     }
 
     private void getDrinks(final Boolean isRefreshing) {
@@ -144,9 +158,6 @@ public class App extends AppCompatActivity {
                }
 
                listOfDrinks = tempList;
-               for (int i = 0; i < tempList.size(); i++) {
-                   getImage(i);
-               }
 
                if(isRefreshing) {
                    mSwipeRefreshLayout.setRefreshing(false);
@@ -184,7 +195,7 @@ public class App extends AppCompatActivity {
                     listOfDrinks.get(location).setImageBytes(bytes);
                     listOfDrinks.get(location).setImage(Utils.getImageSize(image, Utils.ImageSizes.LARGE));
 
-                    mAdapter.notifyDataSetChanged();
+                    mAdapter.notifyItemChanged(location);
                 }
             }
         }, new OnFailureListener() {
@@ -248,7 +259,9 @@ public class App extends AppCompatActivity {
                     // Return that an object was found
                     return true;
                 case R.id.navigation_notifications:
-                    // Nothing here
+                    // Send toast about the function not being implemented yet
+                    Toast toast = Toast.makeText(getApplicationContext(), getString(R.string.nothing_here), Toast.LENGTH_SHORT);
+                    toast.show();
                     return true;
             }
 

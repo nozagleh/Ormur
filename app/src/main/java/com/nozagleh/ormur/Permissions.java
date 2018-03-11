@@ -17,6 +17,9 @@ public class Permissions {
      */
     private static final int PERMISSION_GPS = 42;
 
+    /**
+     * Permission key for writing to storage.
+     */
     private static final int PERMISSION_WRITE = 34;
 
     /**
@@ -54,6 +57,22 @@ public class Permissions {
         askPermission(askingActivity, Manifest.permission.ACCESS_FINE_LOCATION, PERMISSION_GPS);
     }
 
+    /**
+     * Check if the user has granted storage permissions.
+     *
+     *
+     * @param askingActivity The activity which this is invoked in
+     * @return boolean if has permission
+     */
+    public static boolean hasStorage(Activity askingActivity) {
+        return checkPermission(askingActivity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+    }
+
+    /**
+     * Ask for storage permission to the user.
+     *
+     * @param askingActivity The activity which this is invoked in
+     */
     public static void askStorage(Activity askingActivity) {
         askPermission(askingActivity, Manifest.permission.WRITE_EXTERNAL_STORAGE, PERMISSION_WRITE);
     }
@@ -78,16 +97,5 @@ public class Permissions {
                     new String[]{permission},
                     permissionKey);
         }
-    }
-
-    public static boolean isGranted(String permission, int permissionResults) {
-        switch (permission) {
-            // Check for fine location permission
-            case Manifest.permission.ACCESS_FINE_LOCATION:
-                return PackageManager.PERMISSION_GRANTED == permissionResults;
-        }
-
-        // Return false if no permission matches
-        return false;
     }
 }

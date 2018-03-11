@@ -25,6 +25,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.RatingBar;
 import android.widget.TextView;
 
 import com.google.android.gms.tasks.OnFailureListener;
@@ -33,6 +34,7 @@ import com.google.firebase.storage.StorageException;
 import com.nozagleh.ormur.Models.Drink;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -66,7 +68,6 @@ public class DrinkDetail extends AppCompatActivity {
     // Text fields
     TextView txtTitle;
     TextView txtDescription;
-    TextView txtRating;
 
     // Edit fields list
     List<EditText> editFields;
@@ -74,7 +75,9 @@ public class DrinkDetail extends AppCompatActivity {
     // Edit fields
     EditText txtTitleEdit;
     EditText txtDescriptionEdit;
-    EditText txtRatingEdit;
+
+    RatingBar ratingBar;
+    RatingBar ratingBarEdit;
 
     // Floating edit action button
     FloatingActionButton editButton;
@@ -104,6 +107,8 @@ public class DrinkDetail extends AppCompatActivity {
         // Init the text views
         initTextFields();
 
+        initRatingBar();
+
         // Set the floating button
         setupEditButton();
 
@@ -115,6 +120,24 @@ public class DrinkDetail extends AppCompatActivity {
 
         // Set the text details
         setDetails();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        if (!Permissions.hasGPS(this)) {
+            Permissions.askGPS(this);
+        }
+
+        Locator.startListening(this);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        Locator.stopListening();
     }
 
     /**
@@ -190,6 +213,23 @@ public class DrinkDetail extends AppCompatActivity {
             }
         };
     }
+
+    /**
+     * Creates a new on ratingbar change listener.
+     *
+     * Listens for changes to a ratingbar to see if it has changed.
+     *
+     * @return RatingBar.OnRatingBarChangeListener ratingbar change listener
+     */
+    private RatingBar.OnRatingBarChangeListener onRatingBarChange() {
+        return new RatingBar.OnRatingBarChangeListener() {
+            @Override
+            public void onRatingChanged(RatingBar ratingBar, float v, boolean b) {
+                hasChanged = true;
+            }
+        };
+    }
+
 
     /**
      * Return a new onClick listener for when the image is going to be changed.
@@ -271,17 +311,14 @@ public class DrinkDetail extends AppCompatActivity {
         // Bind the fields
         txtTitleEdit = findViewById(R.id.txtTitleEdit);
         txtDescriptionEdit = findViewById(R.id.txtDescriptionEdit);
-        txtRatingEdit = findViewById(R.id.txtRatingEdit);
 
         // Add on text change listeners
         txtTitleEdit.addTextChangedListener(onTextChange());
         txtDescriptionEdit.addTextChangedListener(onTextChange());
-        txtRatingEdit.addTextChangedListener(onTextChange());
 
         // Add the fields to the list
         editFields.add(txtTitleEdit);
         editFields.add(txtDescriptionEdit);
-        editFields.add(txtRatingEdit);
     }
 
     /**
@@ -296,7 +333,6 @@ public class DrinkDetail extends AppCompatActivity {
         // Bind content fields
         txtTitle = findViewById(R.id.txtTitle);
         txtDescription = findViewById(R.id.txtDescription);
-        txtRating = findViewById(R.id.txtRating);
 
         // Bind image hint field
         txtImageHint = findViewById(R.id.txtImageAddHint);
@@ -304,7 +340,14 @@ public class DrinkDetail extends AppCompatActivity {
         // Add the content fields to a list
         textFields.add(txtTitle);
         textFields.add(txtDescription);
-        textFields.add(txtRating);
+    }
+
+    private void initRatingBar() {
+        ratingBar = findViewById(R.id.ratingBar);
+        ratingBar.setEnabled(false);
+
+        ratingBarEdit = findViewById(R.id.ratingBarEdit);
+        ratingBarEdit.setOnRatingBarChangeListener(onRatingBarChange());
     }
 
     /**
@@ -316,6 +359,7 @@ public class DrinkDetail extends AppCompatActivity {
             // Set the visibility of the text and edit fields
             setTextFieldsVisibility(View.GONE);
             setEditFieldsVisibility(View.VISIBLE);
+            setRatingBarVisibility(true);
 
             prepareImageChange(true);
 
@@ -327,6 +371,7 @@ public class DrinkDetail extends AppCompatActivity {
             // Set the visibility of the text and edit fields
             setEditFieldsVisibility(View.GONE);
             setTextFieldsVisibility(View.VISIBLE);
+            setRatingBarVisibility(false);
 
             prepareImageChange(false);
         }
@@ -354,6 +399,17 @@ public class DrinkDetail extends AppCompatActivity {
         }
     }
 
+    private void setRatingBarVisibility(Boolean isEditing) {
+        Log.d("DrinkDetail", isEditing.toString());
+        ratingBar.setVisibility(View.GONE);
+        ratingBarEdit.setVisibility(View.GONE);
+        if (isEditing) {
+            ratingBarEdit.setVisibility(View.VISIBLE);
+        } else {
+            ratingBar.setVisibility(View.VISIBLE);
+        }
+    }
+
     private void setDrinkFromIntent(Intent intent) {
         currentDrink = new Drink();
         currentDrink.setId(intent.getStringExtra("id"));
@@ -370,12 +426,13 @@ public class DrinkDetail extends AppCompatActivity {
         // Set text fields
         txtTitle.setText(currentDrink.getTitle());
         txtDescription.setText(currentDrink.getDescription());
-        txtRating.setText(String.valueOf(currentDrink.getRating()));
 
         // Set edit fields
         txtTitleEdit.setText(currentDrink.getTitle());
         txtDescriptionEdit.setText(currentDrink.getDescription());
-        txtRatingEdit.setText(String.valueOf(currentDrink.getRating()));
+
+        ratingBar.setRating(currentDrink.getRating().floatValue());
+        ratingBarEdit.setRating(currentDrink.getRating().floatValue());
     }
 
     /**
@@ -433,6 +490,8 @@ public class DrinkDetail extends AppCompatActivity {
             setTextFieldsVisibility(View.GONE);
             setEditFieldsVisibility(View.VISIBLE);
 
+            setRatingBarVisibility(true);
+
             // Show the actionbar menu
             showMenu(true);
 
@@ -448,6 +507,8 @@ public class DrinkDetail extends AppCompatActivity {
             // Set visibility for fields
             setTextFieldsVisibility(View.VISIBLE);
             setEditFieldsVisibility(View.GONE);
+
+            setRatingBarVisibility(false);
 
             // Hide the actionbar menu
             showMenu(false);
@@ -567,7 +628,7 @@ public class DrinkDetail extends AppCompatActivity {
     private void combineFields() {
         txtTitle.setText(txtTitleEdit.getText().toString());
         txtDescription.setText(txtDescriptionEdit.getText().toString());
-        txtRating.setText(txtRatingEdit.getText().toString());
+        ratingBar.setRating(ratingBarEdit.getRating());
     }
 
     /**
@@ -578,25 +639,24 @@ public class DrinkDetail extends AppCompatActivity {
             return;
         }
 
-        if (isNew) {
-            // Establish a new data class
-            Location location = Locator.getLocation();
+        // Establish a new data class
+        Location location = Locator.getLocation();
 
-            String locationString = "";
-            if (location != null) {
-                locationString = String.valueOf(location.getLatitude()) + ", " + String.valueOf(location.getLongitude());
-            }
-
-            // Set the drink information from the edit fields
-            combineFields();
-            // Set the location from the fetched location
-            currentDrink.setLocation(locationString);
+        String locationString = "";
+        if (location != null) {
+            locationString = String.valueOf(location.getLatitude()) + ", " + String.valueOf(location.getLongitude());
         }
+
+        // Set the location from the fetched location
+        currentDrink.setLocation(locationString);
+
+        // Set the drink information from the edit fields
+        combineFields();
 
         // Set the drink information based on the text views
         currentDrink.setTitle(txtTitle.getText().toString());
         currentDrink.setDescription(txtDescription.getText().toString());
-        currentDrink.setRating(Double.valueOf(txtRating.getText().toString()));
+        currentDrink.setRating(Double.valueOf(ratingBar.getRating()));
 
         // Set the drink
         String key;
@@ -611,6 +671,7 @@ public class DrinkDetail extends AppCompatActivity {
         // If image is not empty, set the image
         if (image != null) {
             FirebaseData.setImage(key, image);
+            //FirebaseData.setImage(key, imageURI);
         }
 
         if (isNew) {

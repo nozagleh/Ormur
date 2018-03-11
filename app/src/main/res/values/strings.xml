@@ -44,4 +44,5 @@
     <string name="list_error">Could not fetch data</string>
     <string name="image_error">Could not fetch image</string>
     <string name="login_error">Could not login</string>
+    <string name="nothing_here">Nothing here yet</string>
 </resources>

@@ -2,6 +2,7 @@ package com.nozagleh.ormur;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Environment;
 import android.support.design.widget.Snackbar;
 import android.util.Log;
@@ -51,6 +52,13 @@ public class Utils {
             float ratio = (float) imageHeight / max;
             height = max;
             width = (int) (imageWidth / ratio);
+        }
+
+        Bitmap newImage = Bitmap.createScaledBitmap(image, width, height, false);
+
+        // Recycle the old image
+        if (image != newImage && !image.isRecycled()) {
+            image.recycle();
         }
 
         return Bitmap.createScaledBitmap(image,width,height, false);

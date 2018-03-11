@@ -1,12 +1,18 @@
 package com.nozagleh.ormur;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.nozagleh.ormur.App.OnListFragmentInteractionListener;
 import com.nozagleh.ormur.Models.Drink;
 
@@ -42,7 +48,7 @@ public class DrinkRecyclerViewAdapter extends RecyclerView.Adapter<DrinkRecycler
         holder.mRating.setText(String.valueOf(mDrinks.get(position).getRating()));
         holder.mImage.setImageBitmap(holder.mItem.getImage());
 
-        /*if (holder.mItem.getImage() == null) {
+        if (holder.mItem.getImage() == null) {
             FirebaseData.getImage(mDrinks.get(position).getId(), new OnSuccessListener<byte[]>() {
                 @Override
                 public void onSuccess(byte[] bytes) {
@@ -67,7 +73,7 @@ public class DrinkRecyclerViewAdapter extends RecyclerView.Adapter<DrinkRecycler
             });
         } else {
             holder.mImage.setImageBitmap(holder.mItem.getImage());
-        }*/
+        }
 
         holder.mView.setOnClickListener(new View.OnClickListener() {
             @Override

@@ -67,6 +67,11 @@ public class FirebaseData {
         childReference.addListenerForSingleValueEvent(listener);
     }
 
+    public static void getDrinksPersistently(ValueEventListener listener) {
+        DatabaseReference childReference = reference.child(getUser().getUid());
+        childReference.addValueEventListener(listener);
+    }
+
     public static void getImage(final String id, OnSuccessListener<byte[]> listener, OnFailureListener failListener) {
         StorageReference imageReference = storageReference.child("images/" + getUser().getUid() + "/" + id + ".jpg");
         imageReference.getBytes(Long.MAX_VALUE).addOnSuccessListener(listener).addOnFailureListener(failListener);
@@ -76,7 +81,7 @@ public class FirebaseData {
         StorageReference imageReference = storageReference.child("images/" + getUser().getUid() + "/" + id + ".jpg");
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 50, baos);
         byte[] data = baos.toByteArray();
 
         UploadTask uploadTask = imageReference.putBytes(data);
