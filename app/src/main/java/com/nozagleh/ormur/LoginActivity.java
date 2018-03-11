@@ -72,7 +72,7 @@ public class LoginActivity extends AppCompatActivity {
         FirebaseUser currentUser = firebaseAuth.getCurrentUser();
 
         // Check if there is a user signed in or not
-        isSignedIn(currentUser);
+        isSignedIn(currentUser, true);
     }
 
     @Override
@@ -105,10 +105,10 @@ public class LoginActivity extends AppCompatActivity {
                             // Get the current user
                             FirebaseUser user = firebaseAuth.getCurrentUser();
                             // Check if there is any user signed in
-                            isSignedIn(user);
+                            isSignedIn(user, false);
                         } else {
                             // Send null to the sign in checker on failure
-                            isSignedIn(null);
+                            isSignedIn(null, false);
                         }
                     }
                 });
@@ -119,7 +119,7 @@ public class LoginActivity extends AppCompatActivity {
      *
      * @param user Firebase user
      */
-    private void isSignedIn(FirebaseUser user) {
+    private void isSignedIn(FirebaseUser user, boolean initialTry) {
         // Only start the main activity if the user was authenticated
         if (user != null) {
             // Create a new main app class intent
@@ -127,8 +127,10 @@ public class LoginActivity extends AppCompatActivity {
             // Start the activity from the intent
             startActivity(intent);
         } else {
-            // Show a snackbar on failure
-            Utils.showSnackBar(findViewById(R.id.loginContent), getString(R.string.login_error));
+            if (!initialTry) {
+                // Show a snackbar on failure
+                Utils.showSnackBar(findViewById(R.id.loginContent), getString(R.string.login_error));
+            }
         }
     }
 }
