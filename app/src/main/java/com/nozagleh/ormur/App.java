@@ -1,27 +1,20 @@
 package com.nozagleh.ormur;
 
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
-import android.support.design.widget.Snackbar;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.widget.Toast;
 
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.storage.StorageException;
 import com.nozagleh.ormur.Models.Drink;
 
 import java.util.ArrayList;
@@ -122,20 +115,11 @@ public class App extends AppCompatActivity {
         initSwipeToRefresh();
     }
 
-    private void getDrinksPersistently() {
-        FirebaseData.getDrinks(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
-    }
-
+    /**
+     * Get drinks from the remote storage.
+     *
+     * @param isRefreshing Notifies if the app is currently refreshing
+     */
     private void getDrinks(final Boolean isRefreshing) {
         final List<Drink> tempList = new ArrayList<>();
         FirebaseData.getDrinks(new ValueEventListener() {
@@ -168,63 +152,29 @@ public class App extends AppCompatActivity {
                    tempList.add(drink);
                }
 
+               // Assign the list as the temp list
                listOfDrinks = tempList;
 
+               // Check if is refreshing
                if(isRefreshing) {
+                   // Disable refreshing UI
                    mSwipeRefreshLayout.setRefreshing(false);
                }
 
+               // Check if an apdapter has been set
                if (mAdapter == null) {
+                   // Set and bind the adapter
                    mAdapter = setListAdapter();
                    mRecyclerView.setAdapter(mAdapter);
                } else {
+                   // Notify about data change
                    mAdapter.notifyDataSetChanged();
                }
            }
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                Utils.showSnackBar(findViewById(R.id.container),getString(R.string.list_error));
-            }
-        });
-    }
-
-    /**
-     * Get image for a single drink item.
-     *
-     * After fetching the image, the image is added to the respective
-     * item that it belongs to.
-     *
-     * @param location The location of the item in the list of items
-     */
-    private void getImage(final int location) {
-        FirebaseData.getImage(listOfDrinks.get(location).getId(), new OnSuccessListener<byte[]>() {
-            @Override
-            public void onSuccess(byte[] bytes) {
-                if (bytes != null) {
-                    Bitmap image = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-
-                    listOfDrinks.get(location).setImageBytes(bytes);
-                    listOfDrinks.get(location).setImage(Utils.getImageSize(image, Utils.ImageSizes.LARGE));
-
-                    mAdapter.notifyItemChanged(location);
-                }
-            }
-        }, new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                Bitmap defaultImage = BitmapFactory.decodeResource(getResources(), R.mipmap.beer);
-                listOfDrinks.get(location).setImage(defaultImage);
-
-                mAdapter.notifyDataSetChanged();
-
-                // Get the HTTP response code
-                int httpResponseCode = ((StorageException) e).getHttpResultCode();
-
-                // Show a snackbar on failure, not 404
-                if (httpResponseCode != 404) {
-                    Snackbar snackbarFail = Snackbar.make(findViewById(R.id.drinkDetails),getString(R.string.image_error),Snackbar.LENGTH_SHORT);
-                    snackbarFail.show();
-                }
+               // Show a snackbar on data fetch failure
+               Utils.showSnackBar(findViewById(R.id.container),getString(R.string.list_error));
             }
         });
     }

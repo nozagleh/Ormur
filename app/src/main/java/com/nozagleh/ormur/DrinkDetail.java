@@ -36,7 +36,6 @@ import com.google.firebase.storage.StorageException;
 import com.nozagleh.ormur.Models.Drink;
 
 import java.io.File;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -324,15 +323,22 @@ public class DrinkDetail extends AppCompatActivity {
         }
     }
 
+    /**
+     * Get information from the storage.
+     */
     private void getInfoFromStore() {
         currentDrink = new Drink();
         currentDrink.setTitle(tempTitle);
         currentDrink.setDescription(tempDescription);
         currentDrink.setRating(tempRating.doubleValue());
 
+        // Call load into fields
         loadInfoToFields();
     }
 
+    /**
+     * Load information from the current drink.
+     */
     private void loadInfoToFields() {
         txtTitleEdit.setText(currentDrink.getTitle());
         txtDescriptionEdit.setText(currentDrink.getDescription());
@@ -449,8 +455,16 @@ public class DrinkDetail extends AppCompatActivity {
         }
     }
 
+    /**
+     * Set the current drink from an incoming intent + intent data.
+     *
+     * @param intent The incoming intent
+     */
     private void setDrinkFromIntent(Intent intent) {
+        // Create a new drink item
         currentDrink = new Drink();
+
+        // Get all the data from the intent
         currentDrink.setId(intent.getStringExtra("id"));
         currentDrink.setTitle(intent.getStringExtra("title"));
         currentDrink.setDescription(intent.getStringExtra("description"));
@@ -523,6 +537,10 @@ public class DrinkDetail extends AppCompatActivity {
         });
     }
 
+    /**
+     * Set the state of the activity as "editing".
+     * This will affect various elements such as current drink, input fields etc.
+     */
     private void setIsEditing() {
         if (!isEdit) {
             // Set visibility for fields

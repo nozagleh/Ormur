@@ -15,12 +15,15 @@ import java.io.File;
 import java.net.ConnectException;
 
 /**
+ * Various small utilities used by the application.
+ *
  * Created by arnarfreyr on 9.2.2018.
  */
 
 public class Utils {
     private static final String TAG = "Utils";
 
+    // Shared preferences add drink key
     public static final String SP_ADD_DRINK = "com.nozagleh.ormur.SP_ADD_DRINK";
 
     // Static strings
@@ -36,8 +39,6 @@ public class Utils {
     public static Bitmap getImageSize(Bitmap image, ImageSizes size) {
         int imageWidth = image.getWidth();
         int imageHeight = image.getHeight();
-
-        float aspectRation = imageWidth / imageHeight;
 
         int max;
         if (size == ImageSizes.LARGE) {
@@ -72,6 +73,16 @@ public class Utils {
         LARGE
     }
 
+    /**
+     * Create a temporary image file on the file system.
+     *
+     * @param prefix Image prefix
+     * @param suffix Image suffix
+     * @param context Current application context
+     *
+     * @return File The newly created file
+     * @throws Exception
+     */
     public static File createTempImageFile(String prefix, String suffix, Context context) throws Exception {
         File tempDirectory = new File(context.getExternalFilesDir(
                 Environment.DIRECTORY_PICTURES),".temp"
@@ -84,11 +95,24 @@ public class Utils {
         return File.createTempFile(prefix, suffix, tempDirectory);
     }
 
+    /**
+     * Show a snackbar, needs the current view to show it in. As
+     * well as the message that is to be shown.
+     *
+     * @param view The view of which the snackbar should be shown in
+     * @param message The message to the user
+     */
     public static void showSnackBar(View view, String message) {
         Snackbar snack = Snackbar.make(view, message, Snackbar.LENGTH_LONG);
         snack.show();
     }
 
+    /**
+     * Check if the device is in landscape mode.
+     *
+     * @param context Current context
+     * @return boolean If the orientation matches landscape
+     */
     public static boolean isLandscape(Context context) {
         Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
         int rotation = display.getRotation();

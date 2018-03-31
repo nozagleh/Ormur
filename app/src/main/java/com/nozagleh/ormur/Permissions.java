@@ -7,6 +7,8 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 
 /**
+ * Class for checking various permissions needed by the application.
+ *
  * Created by arnarfreyr on 9.2.2018.
  */
 

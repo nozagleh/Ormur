@@ -24,7 +24,13 @@ public class SplashActivity extends AppCompatActivity {
         isSignedIn(currentUser);
     }
 
+    /**
+     * Check if a the user is signed in.
+     *
+     * @param user Current user
+     */
     private void isSignedIn(FirebaseUser user) {
+        // If the user object is not null, start the app
         if ( user != null ) {
             Intent appIntent = new Intent(this, App.class);
             startActivity(appIntent);
