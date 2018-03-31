@@ -6,9 +6,13 @@ import android.graphics.BitmapFactory;
 import android.os.Environment;
 import android.support.design.widget.Snackbar;
 import android.util.Log;
+import android.view.Display;
+import android.view.Surface;
 import android.view.View;
+import android.view.WindowManager;
 
 import java.io.File;
+import java.net.ConnectException;
 
 /**
  * Created by arnarfreyr on 9.2.2018.
@@ -16,6 +20,8 @@ import java.io.File;
 
 public class Utils {
     private static final String TAG = "Utils";
+
+    public static final String SP_ADD_DRINK = "com.nozagleh.ormur.SP_ADD_DRINK";
 
     // Static strings
     public static final Integer IMAGE_CAPTURE = 1;
@@ -54,13 +60,6 @@ public class Utils {
             width = (int) (imageWidth / ratio);
         }
 
-        Bitmap newImage = Bitmap.createScaledBitmap(image, width, height, false);
-
-        // Recycle the old image
-        if (image != newImage && !image.isRecycled()) {
-            image.recycle();
-        }
-
         return Bitmap.createScaledBitmap(image,width,height, false);
     }
 
@@ -88,5 +87,12 @@ public class Utils {
     public static void showSnackBar(View view, String message) {
         Snackbar snack = Snackbar.make(view, message, Snackbar.LENGTH_LONG);
         snack.show();
+    }
+
+    public static boolean isLandscape(Context context) {
+        Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        int rotation = display.getRotation();
+
+        return (rotation == Surface.ROTATION_90 || rotation == Surface.ROTATION_270);
     }
 }

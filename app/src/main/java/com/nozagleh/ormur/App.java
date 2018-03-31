@@ -9,6 +9,7 @@ import android.support.design.widget.BottomNavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -37,6 +38,9 @@ public class App extends AppCompatActivity {
     private RecyclerView.Adapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
     private SwipeRefreshLayout mSwipeRefreshLayout;
+
+    private static final int COLUMN_SINGLE = 1;
+    private static final int COLUMN_MULTI = 2;
 
     // The local list of drinks
     private List<Drink> listOfDrinks;
@@ -94,7 +98,14 @@ public class App extends AppCompatActivity {
         mRecyclerView = findViewById(R.id.list);
 
         // Add a linear layout and set it as the layout manager for the recycler view
-        mLayoutManager = new LinearLayoutManager(this);
+        if (Utils.isLandscape(this)) {
+            mLayoutManager = new GridLayoutManager(this,COLUMN_MULTI);
+
+        } else {
+            mLayoutManager = new GridLayoutManager(this,COLUMN_SINGLE);
+
+        }
+
         mRecyclerView.setLayoutManager(mLayoutManager);
 
         // Only bind the adapter if the list is not empty
