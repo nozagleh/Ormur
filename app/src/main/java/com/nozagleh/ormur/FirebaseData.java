@@ -1,7 +1,6 @@
 package com.nozagleh.ormur;
 
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.util.Log;
@@ -12,7 +11,6 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
@@ -21,11 +19,15 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.nozagleh.ormur.Models.Drink;
 
-import org.json.JSONObject;
-
 import java.io.ByteArrayOutputStream;
 
 /**
+ * A general class for holding all the functions that have
+ * to do with the Firebase storage used for the application.
+ *
+ * All functions are static, as no class should be needed to instanced
+ * for uploading, downloading, or removing drinks or media on the cloud.
+ *
  * Created by arnarfreyr on 03/03/2018.
  */
 
@@ -39,10 +41,15 @@ public class FirebaseData {
     private static FirebaseStorage storage = FirebaseStorage.getInstance();
     private static StorageReference storageReference = storage.getReference();
 
-    private static Bitmap image;
-
+    /**
+     * Upload a drink to the firebase storage. Uses data from a drink object.
+     *
+     * @param drink The drink which to be uploaded
+     * @param id The id of the drink
+     * @return ID key
+     */
     public static String setDrink(Drink drink, String id) {
-        String key = null;
+        String key;
         if (id != null) {
             DatabaseReference childReference = reference.child(getUser().getUid()).child(id);
             key = childReference.getKey();
@@ -61,26 +68,52 @@ public class FirebaseData {
         return key;
     }
 
+    /**
+     * Remove a single drink from the firebase storage.
+     *
+     * @param id Id of the drink to remove
+     */
     public static void removeDrink(String id) {
+        // Delete the drink via the default reference
         reference.child(getUser().getUid()).child(id).removeValue();
+        // Call for a removal of the drink's image
         removeImage(id);
     }
 
+    /**
+     * Get all drinks.
+     *
+     * @param listener Return listener when drinks have been fetched
+     */
     public static void getDrinks(ValueEventListener listener) {
         DatabaseReference childReference = reference.child(getUser().getUid());
         childReference.addListenerForSingleValueEvent(listener);
     }
 
+    /**
+     * Get an image for a drink from the firebase storage.
+     *
+     * @param id The id of the drink
+     * @param listener The return listener, called when fetching is finished
+     * @param failListener The return failure listener, called if fetch is failed
+     */
     public static void getImage(final String id, OnSuccessListener<byte[]> listener, OnFailureListener failListener) {
         StorageReference imageReference = storageReference.child("images/" + getUser().getUid() + "/" + id + ".jpg");
         imageReference.getBytes(Long.MAX_VALUE).addOnSuccessListener(listener).addOnFailureListener(failListener);
     }
 
+    /**
+     * Set an image of a drink via its key id.
+     * Calls the firebase storage and uploads an image for a drink.
+     *
+     * @param id The id of the drink
+     * @param bitmap The image to be uploaded
+     */
     public static void setImage(String id, Bitmap bitmap) {
         StorageReference imageReference = storageReference.child("images/" + getUser().getUid() + "/" + id + ".jpg");
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 50, baos);
         byte[] data = baos.toByteArray();
 
         UploadTask uploadTask = imageReference.putBytes(data);
@@ -98,27 +131,6 @@ public class FirebaseData {
         });
     }
 
-    public static void setImage(String id, Uri imageUri) {
-        StorageReference imageReference = storageReference.child("images/" + getUser().getUid() + "/" + id + ".jpg");
-
-        UploadTask uploadTask = imageReference.putFile(imageUri);
-
-        uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-            @Override
-            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-
-            }
-        });
-
-        uploadTask.addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-
-            }
-        });
-
-    }
-
     /**
      * Remove a image from the Firabase storage. Based on the id of the object being removed.
      *
@@ -129,8 +141,14 @@ public class FirebaseData {
         imageReference.delete();
     }
 
+    /**
+     * Get the current Firebase user of the application.
+     *
+     * @return FirebaseUser The current firebase user
+     */
     public static FirebaseUser getUser() {
         firebaseAuth = FirebaseAuth.getInstance();
+
         return firebaseAuth.getCurrentUser();
     }
 }

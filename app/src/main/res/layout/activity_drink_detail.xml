@@ -22,9 +22,23 @@
         android:layout_height="200dp"
         android:adjustViewBounds="true"
         android:scaleType="fitCenter"
+        android:contentDescription="@string/txt_image_desc"
         android:background="@color/colorLightBG"
         android:src="@drawable/ic_insert_photo_white_24px"
         app:layout_constraintTop_toBottomOf="@id/detailsToolbar" />
+
+    <TextView
+        android:id="@+id/txtImageAddHint"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/txt_change_image"
+        android:textSize="@dimen/text_size"
+        android:background="@drawable/bg_round_transparent"
+        app:layout_constraintTop_toTopOf="@id/imgDrink"
+        android:gravity="center"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/imgDrink" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/editButton"
@@ -32,7 +46,7 @@
         android:layout_height="wrap_content"
         android:layout_marginEnd="10dp"
         app:backgroundTint="@color/colorAccent"
-        android:src="@drawable/ic_mode_edit_black_24px"
+        android:src="@drawable/ic_edit_white_24px"
         android:layout_gravity="bottom|end"
         android:layout_marginBottom="10dp"
         app:layout_constraintBottom_toBottomOf="@id/imgDrink"
@@ -42,7 +56,6 @@
         android:id="@+id/textHolder"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="100dp"
         android:padding="20dp"
         app:layout_constraintTop_toBottomOf="@id/imgDrink">
 
@@ -53,7 +66,6 @@
             android:textSize="@dimen/text_heading_size"
             android:textStyle="bold"
             android:layout_marginBottom="20dp"
-            android:layout_alignBaseline="@id/txtTitleEdit"
             android:layout_alignParentTop="true"
             android:layout_alignParentStart="true"/>
 
@@ -65,51 +77,49 @@
             android:inputType="textCapSentences|textNoSuggestions"
             android:textStyle="bold"
             android:layout_marginBottom="20dp"
+            android:layout_alignBaseline="@id/txtTitle"
             android:hint="@string/txt_name"
             android:layout_alignParentTop="true"
             android:layout_alignParentStart="true"/>
 
-        <TextView
-            android:id="@+id/txtRating"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentStart="true"
-            android:layout_alignBaseline="@id/txtRatingEdit"
-            android:textStyle="italic"
+        <RatingBar
+            android:id="@+id/ratingBar"
+            android:layout_below="@id/txtTitle"
+            android:numStars="5"
+            android:stepSize="0.5"
             android:layout_marginBottom="20dp"
-            android:textSize="@dimen/text_rating_size"
-            android:layout_below="@id/txtTitle" />
-
-        <EditText
-            android:id="@+id/txtRatingEdit"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
             android:layout_alignParentStart="true"
-            android:textStyle="italic"
-            android:inputType="number"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <RatingBar
+            android:id="@+id/ratingBarEdit"
             android:layout_marginBottom="20dp"
-            android:hint="@string/txt_rating"
-            android:textSize="@dimen/text_rating_size"
-            android:layout_below="@id/txtTitleEdit" />
+            android:numStars="5"
+            android:stepSize="0.5"
+            android:layout_below="@id/txtTitleEdit"
+            android:layout_alignBaseline="@id/ratingBar"
+            android:layout_alignParentStart="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
 
         <TextView
             android:id="@+id/txtDescription"
             android:textSize="@dimen/text_size"
-            android:layout_alignBaseline="@id/txtDescriptionEdit"
             android:layout_marginBottom="20dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/txtRating" />
+            android:layout_below="@id/ratingBar" />
 
         <EditText
             android:id="@+id/txtDescriptionEdit"
             android:textSize="@dimen/text_size"
             android:hint="@string/txt_description"
+            android:layout_alignBaseline="@id/txtDescription"
             android:inputType="textMultiLine"
             android:layout_marginBottom="20dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/txtRatingEdit" />
+            android:layout_below="@id/ratingBarEdit" />
 
     </RelativeLayout>
 

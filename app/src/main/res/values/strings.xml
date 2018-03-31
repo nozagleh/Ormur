@@ -24,6 +24,8 @@
     <string name="txt_finish">Finish</string>
     <string name="txt_rating_desc">Rating can be given from <b>zero</b> to <b>five</b>\n as well as <i>.5</i> in between</string>
     <string name="txt_add_image">Add image</string>
+    <string name="txt_change_image">Click to change</string>
+    <string name="txt_image_desc">Drink image</string>
 
     <!-- App bar texts -->
     <string name="menu_search">Search</string>
@@ -39,4 +41,8 @@
 
     <!-- Errors -->
     <string name="add_error">Please fill <b>all</b> fields</string>
+    <string name="list_error">Could not fetch data</string>
+    <string name="image_error">Could not fetch image</string>
+    <string name="login_error">Could not login</string>
+    <string name="nothing_here">Nothing here yet</string>
 </resources>

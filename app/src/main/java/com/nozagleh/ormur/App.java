@@ -1,26 +1,17 @@
 package com.nozagleh.ormur;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.FragmentTransaction;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.util.Log;
-import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.EditText;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
+import android.widget.Toast;
 
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
@@ -28,280 +19,265 @@ import com.nozagleh.ormur.Models.Drink;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-public class App extends AppCompatActivity implements DrinkFragment.OnListFragmentInteractionListener, AddDrink.OnFragmentInteractionListener {
+public class App extends AppCompatActivity {
     private static String ACTIVITY_TAG = "App";
 
-    public static String STORAGE = "AppStorage";
-    public static String USER_KEY = "userKey";
-
-    private AddDrink addDrinkFragment;
-    private DrinkFragment drinkListFragment;
-
-    private SharedPreferences sharedPreferences;
-
+    // Activity toolbar
     private Toolbar toolbar;
 
-    private FragmentTransaction fragmentTransaction;
+    // Setup the recyclerview
+    private RecyclerView mRecyclerView;
+    private RecyclerView.Adapter mAdapter;
+    private RecyclerView.LayoutManager mLayoutManager;
+    private SwipeRefreshLayout mSwipeRefreshLayout;
 
-    private RelativeLayout searchBlock;
-    private EditText searchText;
+    private static final int COLUMN_SINGLE = 1;
+    private static final int COLUMN_MULTI = 2;
 
+    // The local list of drinks
     private List<Drink> listOfDrinks;
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.bar, menu);
-        return true;
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_app);
 
-        addDrinkFragment = new AddDrink();
-        drinkListFragment = new DrinkFragment();
-
-        //fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        //fragmentTransaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left);
-
-        toolbar = (Toolbar) findViewById(R.id.toolBar);
+        toolbar = findViewById(R.id.toolBar);
+        toolbar.setTitleTextColor(getResources().getColor(R.color.colorWhite));
+        toolbar.setNavigationIcon(R.mipmap.ic_launcher_round);
+        toolbar.setBackgroundColor(getResources().getColor(R.color.colorPrimaryDark));
         setSupportActionBar(toolbar);
 
-        toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                switch (item.toString()) {
-                    case "Search":
-                        if (searchBlock.getVisibility() == View.GONE) {
-                            if (searchText.length() > 0) {
-                                searchTextChanged(searchText.getText().toString());
-                            }
-                            item.setIcon(R.drawable.ic_close_black_24px);
-                            searchBlock.setVisibility(View.VISIBLE);
-
-                        } else {
-                            resetList();
-                            item.setIcon(R.drawable.ic_search_black_24dp);
-                            searchBlock.setVisibility(View.GONE);
-
-                        }
-                        return true;
-                    case "Delete":
-                        AddDrink addDrink = (AddDrink) getSupportFragmentManager().findFragmentById(R.id.content);
-                        addDrink.removeDrink();
-                        return true;
-                }
-
-                return false;
-            }
-        });
-
-        sharedPreferences = getSharedPreferences(STORAGE, 0);
-
-        searchBlock = findViewById(R.id.searchBlock);
-        searchBlock.setVisibility(View.GONE);
-
-        searchText = findViewById(R.id.txtSearch);
-        searchText.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-            }
-
-            @Override
-            public void afterTextChanged(Editable editable) {
-                if (editable.length() <= 0) {
-                    resetList();
-                } else {
-                    searchTextChanged(editable.toString());
-                }
-            }
-        });
-
-        getDrinks(false, null);
-
-        if (findViewById(R.id.content) != null) {
-            if (savedInstanceState != null) {
-                return;
-            }
-
-            fragmentTransaction = getSupportFragmentManager().beginTransaction();
-            //fragmentTransaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left);
-            fragmentTransaction.add(R.id.content, drinkListFragment).commit();
+        if (!Permissions.hasStorage(this)) {
+            Permissions.askStorage(this);
         }
 
-        BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
+        listOfDrinks = new ArrayList<>();
+
+        BottomNavigationView navigation = findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        listOfDrinks = new ArrayList<>();
+
+        mAdapter = null;
+
+        initRecycler();
+
+        getDrinks(false);
+    }
+
+    private void initSwipeToRefresh() {
+        mSwipeRefreshLayout = findViewById(R.id.swipeRefresh);
+        mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                // Repopulate the drink list on refresh
+                getDrinks(true);
+            }
+        });
+    }
+
+    /**
+     * Initiate the recycler view in the activity.
+     */
+    private void initRecycler() {
+        // Locate the recycler
+        mRecyclerView = findViewById(R.id.list);
+
+        // Add a linear layout and set it as the layout manager for the recycler view
+        if (Utils.isLandscape(this)) {
+            mLayoutManager = new GridLayoutManager(this,COLUMN_MULTI);
+
+        } else {
+            mLayoutManager = new GridLayoutManager(this,COLUMN_SINGLE);
+
+        }
+
+        mRecyclerView.setLayoutManager(mLayoutManager);
+
+        // Only bind the adapter if the list is not empty
+        if (listOfDrinks.size() > 0) {
+            // Set the list adapter
+            mAdapter = setListAdapter();
+            mRecyclerView.setAdapter(mAdapter);
+
+            // Return before fetching list since it has been populated
+            return;
+        }
+
+        // Init the swipe to refresh funcion
+        initSwipeToRefresh();
+    }
+
+    /**
+     * Get drinks from the remote storage.
+     *
+     * @param isRefreshing Notifies if the app is currently refreshing
+     */
+    private void getDrinks(final Boolean isRefreshing) {
+        final List<Drink> tempList = new ArrayList<>();
+        FirebaseData.getDrinks(new ValueEventListener() {
+           @Override
+           public void onDataChange(DataSnapshot dataSnapshot) {
+               // Loop through all the drinks returned from the database
+               for (DataSnapshot data : dataSnapshot.getChildren()) {
+                   // Create a new drink object
+                   Drink drink = new Drink();
+
+                   // Get title first so we can check the value
+                   drink.setTitle((String) data.child("title").getValue());
+
+                   // Set the drink values
+                   drink.setId(data.getKey());
+                   drink.setDescription((String) data.child("description").getValue());
+                   drink.setLocation((String) data.child("location").getValue());
+
+                   // Check if rating comes as long or double
+                   if (data.child("rating").getValue() instanceof Long) {
+                       // Get the long value
+                       Long ratingLong = (long) data.child("rating").getValue();
+                       // Convert the rating to double
+                       drink.setRating(ratingLong.doubleValue());
+                   } else if (data.child("rating").getValue() instanceof Double) {
+                       // Cast the rating to double and set the drink rating
+                       drink.setRating((double) data.child("rating").getValue());
+                   }
+                    // Add the drink to the list
+                   tempList.add(drink);
+               }
+
+               // Assign the list as the temp list
+               listOfDrinks = tempList;
+
+               // Check if is refreshing
+               if(isRefreshing) {
+                   // Disable refreshing UI
+                   mSwipeRefreshLayout.setRefreshing(false);
+               }
+
+               // Check if an apdapter has been set
+               if (mAdapter == null) {
+                   // Set and bind the adapter
+                   mAdapter = setListAdapter();
+                   mRecyclerView.setAdapter(mAdapter);
+               } else {
+                   // Notify about data change
+                   mAdapter.notifyDataSetChanged();
+               }
+           }
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+               // Show a snackbar on data fetch failure
+               Utils.showSnackBar(findViewById(R.id.container),getString(R.string.list_error));
+            }
+        });
+    }
+
+    /**
+     * Set a list adapter to the recycler view.
+     *
+     * @return Instance of the drink recycler adapter, used for callbacks
+     */
+    private DrinkRecyclerViewAdapter setListAdapter() {
+        return new DrinkRecyclerViewAdapter(listOfDrinks, new App.OnListFragmentInteractionListener() {
+            @Override
+            public void onListFragmentInteractionClick(Drink item) {
+                // Call for opening of detailed view on item click
+                openDrinkDetails(item);
+            }
+        });
+    }
+
+    /**
+     * Handle bottom navigation clicks
+     */
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
 
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-            // Hide the search block
-            searchBlock.setVisibility(View.GONE);
-
             switch (item.getItemId()) {
                 case R.id.navigation_home:
-                    getSupportFragmentManager().popBackStack();
-                    fragmentTransaction = getSupportFragmentManager().beginTransaction();
-                    //fragmentTransaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left);
-                    fragmentTransaction.replace(R.id.content, drinkListFragment).addToBackStack(null).commit();
+                    // Do nothing on list click, since the activity will always have the list
                     return true;
                 case R.id.navigation_dashboard:
-                    fragmentTransaction = getSupportFragmentManager().beginTransaction();
-                    //fragmentTransaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left);
-                    fragmentTransaction.replace(R.id.content, addDrinkFragment).addToBackStack(null).commit();
+                    // Call for an empty drink details view to be started
+                    // For adding a new drink
+                    Intent drinkDetails = new Intent(getApplicationContext(), DrinkDetail.class);
+
+                    // Notify the intent activity that a new drink is being added
+                    drinkDetails.putExtra("isNew",true);
+
+                    // Start the activity
+                    startActivity(drinkDetails);
+
+                    // Return that an object was found
                     return true;
                 case R.id.navigation_notifications:
-                    //getSupportFragmentManager().beginTransaction().add(R.id.content, addDrink).commit();
+                    // Send toast about the function not being implemented yet
+                    Toast toast = Toast.makeText(getApplicationContext(), getString(R.string.nothing_here), Toast.LENGTH_SHORT);
+                    toast.show();
                     return true;
             }
+
+            // No item was found
             return false;
         }
 
     };
 
     /**
-     * On long click fragment interaction, a link between the activity -> fragment -> list.
+     * Open a detailed view of a drink item.
      *
-     * When a list item is clicked, the action is sent to the fragment holding the list,
-     * then passed on to the parent activity(this) for further development.
+     * Creates an intent for the DrinkDetails activity, with the needed
+     * data added as extras to the intent.
      *
-     * @param item List item being long clicked
+     * @param item The drink item
      */
-    @Override
-    public void onListFragmentInteraction(Drink item) {
-        AddDrink addDrink = AddDrink.newInstance(item);
-
-        fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        //fragmentTransaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left);
-        fragmentTransaction.replace(R.id.content,addDrink).addToBackStack(null).commit();
-    }
-
-    /**
-     * On click fragment interaction. A link between the activity -> fragment -> list.
-     *
-     * When a list item is clicked, the action is sent to the fragment holding the list,
-     * then passed on to the parent activity(this) for further development.
-     *
-     * @param item Current list item being clicked
-     */
-    @Override
-    public void onListFragmentInteractionClick(Drink item) {
+    private void openDrinkDetails(Drink item) {
+        // Create a new intent
         Intent drinkDetails = new Intent(this, DrinkDetail.class);
 
+        // Put all the drink details into the intent extras
         drinkDetails.putExtra("id", item.getId());
         drinkDetails.putExtra("title", item.getTitle());
         drinkDetails.putExtra("description", item.getDescription());
         drinkDetails.putExtra("location", item.getLocation());
         drinkDetails.putExtra("rating", item.getRating());
 
-        drinkDetails.putExtra("imge", item.getImageBytes());
-
+        // Start the activity
         startActivity(drinkDetails);
     }
 
-    @Override
-    public void setAppBarSearch() {
-        toolbar.getMenu().clear();
-        getMenuInflater().inflate(R.menu.bar, toolbar.getMenu());
-    }
-
-    @Override
-    public void addDrinkEditDrink() {
-        toolbar.getMenu().clear();
-        getMenuInflater().inflate(R.menu.bar_delete, toolbar.getMenu());
-    }
-
-    @Override
-    public void doneAddingDrink(String message) {
-        getSupportFragmentManager().popBackStack();
-
-        fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        //fragmentTransaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left);
-        fragmentTransaction.replace(R.id.content,drinkListFragment).addToBackStack(null).commit();
-
-        Snackbar snackbar = Snackbar.make(findViewById(R.id.content),message, Snackbar.LENGTH_LONG);
-        snackbar.show();
-    }
-
-    private void resetList() {
-        DrinkFragment drinkFragment = (DrinkFragment) getSupportFragmentManager().findFragmentById(R.id.content);
-        drinkFragment.refreshList(true);
-    }
-
-    private List<Drink> getDrinks(final Boolean isSearch, final String searchText) {
-        FirebaseData.getDrinks(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                // Create a new list of drinks
-                List<Drink> drinkList = new ArrayList<>();
-
-                // Loop through all the drinks returned from the database
-                for (DataSnapshot data:dataSnapshot.getChildren()) {
-                    // Create a new drink object
-                    Drink drink = new Drink();
-
-                    // Get title first so we can check the value
-                    drink.setTitle((String) data.child("title").getValue());
-
-                    // Set the drink values
-                    drink.setId(data.getKey());
-                    drink.setDescription((String) data.child("description").getValue());
-                    drink.setLocation((String) data.child("location").getValue());
-
-                    // Check if rating comes as long or double
-                    if (data.child("rating").getValue() instanceof Long) {
-                        // Get the long value
-                        Long ratingLong = (long) data.child("rating").getValue();
-                        // Convert the rating to double
-                        drink.setRating(ratingLong.doubleValue());
-                    } else if (data.child("rating").getValue() instanceof Double) {
-                        // Cast the rating to double and set the drink rating
-                        drink.setRating((double) data.child("rating").getValue());
-                    }
-
-                    // Add the drink to the drink list
-                    if (isSearch) {
-                        Pattern searchPattern = Pattern.compile("([\\w\\s])*" + searchText + "([\\w\\s])*");
-                        Matcher matcher = searchPattern.matcher(drink.getTitle().toLowerCase());
-
-                        if (matcher.find()) {
-                            drinkList.add(drink);
-                        }
-                    } else {
-                        drinkList.add(drink);
-                    }
-                }
-                listOfDrinks = drinkList;
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
-
-        return listOfDrinks;
-    }
-
-    private void searchTextChanged(final String searchText) {
-        DrinkFragment drinkFragment = (DrinkFragment) getSupportFragmentManager().findFragmentById(R.id.content);
-        drinkFragment.updateList(getDrinks(true, searchText));
-    }
-
+    /**
+     * Override on request permission results.
+     *
+     * @param requestCode
+     * @param permissions
+     * @param grantResults
+     */
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+    /**
+     * This interface must be implemented by activities that contain this
+     * fragment to allow an interaction in this fragment to be communicated
+     * to the activity and potentially other fragments contained in that
+     * activity.
+     * <p/>
+     * See the Android Training lesson <a href=
+     * "http://developer.android.com/training/basics/fragments/communicating.html"
+     * >Communicating with Other Fragments</a> for more information.
+     */
+    public interface OnListFragmentInteractionListener {
+        void onListFragmentInteractionClick(Drink item);
     }
 }
