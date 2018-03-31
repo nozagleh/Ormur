@@ -49,6 +49,7 @@
         </activity>
         <activity
             android:name=".DrinkDetail"
+            android:screenOrientation="portrait"
             android:parentActivityName=".App">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
