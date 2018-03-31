@@ -2,6 +2,7 @@ package com.nozagleh.ormur;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -58,10 +59,7 @@ public class DrinkRecyclerViewAdapter extends RecyclerView.Adapter<DrinkRecycler
                         holder.mImage.setDrawingCacheEnabled(true);
                         holder.mImage.buildDrawingCache();
 
-                        // Set the image
-                        holder.mImage.setImageBitmap(
-                                Utils.getImageSize(image, Utils.ImageSizes.LARGE)
-                        );
+                        holder.mImage.setImageBitmap(image);
                     }
                 }
             }, new OnFailureListener() {

@@ -2,7 +2,9 @@ package com.nozagleh.ormur;
 
 import android.app.Activity;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.location.Location;
@@ -82,6 +84,12 @@ public class DrinkDetail extends AppCompatActivity {
     // Floating edit action button
     FloatingActionButton editButton;
 
+
+    SharedPreferences sharedPreferences;
+
+    String tempTitle, tempDescription;
+    Float tempRating;
+
     /**
      * OnCreate activity.
      *
@@ -107,6 +115,7 @@ public class DrinkDetail extends AppCompatActivity {
         // Init the text views
         initTextFields();
 
+        // Init the rating bars
         initRatingBar();
 
         // Set the floating button
@@ -238,11 +247,16 @@ public class DrinkDetail extends AppCompatActivity {
      */
     private View.OnClickListener onImageCLick() {
         return new View.OnClickListener() {
-            @Override
+            @Override   
             public void onClick(View view) {
                 initiateCamera();
             }
         };
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
     }
 
     /**
@@ -252,6 +266,13 @@ public class DrinkDetail extends AppCompatActivity {
         Intent intent = getIntent();
 
         isNew = intent.getBooleanExtra("isNew",false);
+
+        if (isNew) {
+            sharedPreferences = getSharedPreferences(Utils.SP_ADD_DRINK, Context.MODE_PRIVATE);
+            tempTitle = sharedPreferences.getString("title","");
+            tempDescription = sharedPreferences.getString("description", "");
+            tempRating = sharedPreferences.getFloat("rating", 0);
+        }
     }
 
     /**
@@ -292,6 +313,8 @@ public class DrinkDetail extends AppCompatActivity {
                 isNew = true;
                 // Show the edit fields if adding ned
                 setEditFieldsVisibility(View.VISIBLE);
+
+                getInfoFromStore();
             } else {
                 // Set current drink
                 setDrinkFromIntent(intent);
@@ -299,6 +322,22 @@ public class DrinkDetail extends AppCompatActivity {
                 setFieldInformation();
             }
         }
+    }
+
+    private void getInfoFromStore() {
+        currentDrink = new Drink();
+        currentDrink.setTitle(tempTitle);
+        currentDrink.setDescription(tempDescription);
+        currentDrink.setRating(tempRating.doubleValue());
+
+        loadInfoToFields();
+    }
+
+    private void loadInfoToFields() {
+        txtTitleEdit.setText(currentDrink.getTitle());
+        txtDescriptionEdit.setText(currentDrink.getDescription());
+        ratingBarEdit.setRating(currentDrink.getRating().floatValue());
+        imageView.setImageBitmap(currentDrink.getImage());
     }
 
     /**
@@ -584,7 +623,7 @@ public class DrinkDetail extends AppCompatActivity {
             // Get the image from URI
             tempImage = android.provider.MediaStore.Images.Media.getBitmap(contentResolver, imageURI);
             // Get the correct size for the image
-            tempImage = Utils.getImageSize(tempImage, Utils.ImageSizes.LARGE);
+            tempImage = Utils.getImageSize(tempImage, Utils.ImageSizes.SMALL);
 
             if (tempImage != null) {
                 // Set the image to the local Bitmap
