@@ -85,7 +85,9 @@ public class LoginActivity extends AppCompatActivity {
                 GoogleSignInAccount account = task.getResult(ApiException.class);
                 firebaseAuthentication(account);
             } catch (ApiException e) {
+                Log.e(TAG, e.getMessage());
                 Log.w(TAG, "Google sign in failed", e);
+                Utils.showSnackBar(findViewById(R.id.loginContent), getString(R.string.login_error));
             }
         }
     }

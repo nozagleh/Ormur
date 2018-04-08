@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "623679505493-3q8dfh5qln68uhdr1q33ha97jpovkatk.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.nozagleh.ormur",
+            "certificate_hash": "9f3bc555a5453db9bbd90d39d230fc3701e49635"
+          }
+        },
+        {
           "client_id": "623679505493-cpoh74d5l0e0k46bpes8f9792uvqtc6l.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
