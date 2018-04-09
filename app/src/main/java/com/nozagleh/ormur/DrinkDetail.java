@@ -35,7 +35,13 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.storage.StorageException;
 import com.nozagleh.ormur.Models.Drink;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,6 +50,8 @@ public class DrinkDetail extends AppCompatActivity {
 
     // Boolean to set if new object is being added or edited
     Boolean isNew = false, isEdit = false, hasChanged = false, hasImageChanged = false, isSaving = false;
+
+    private static final String TEMP_IMG_NAME = "newImageAdded.jpeg";
 
     // Actionbar menu
     Menu saveDeleteMenu;
@@ -140,12 +148,24 @@ public class DrinkDetail extends AppCompatActivity {
 
         Locator.startListening(this);
 
-        if (isNew) {
+        if (isNew && !hasImageChanged) {
             sharedPreferences = getSharedPreferences(Utils.SP_ADD_DRINK, Context.MODE_PRIVATE);
 
             txtTitleEdit.setText(sharedPreferences.getString("title",""));
             txtDescriptionEdit.setText(sharedPreferences.getString("description", ""));
             ratingBarEdit.setRating(sharedPreferences.getFloat("rating", 0));
+
+            try {
+                FileInputStream fileInputStream = this.openFileInput(TEMP_IMG_NAME);
+
+                if(fileInputStream != null) {
+                    // Decode and get the image.
+                    image = BitmapFactory.decodeStream(fileInputStream);
+                    imageView.setImageBitmap(image);
+                }
+            } catch(Exception e) {
+                Log.e(TAG, "General file error", e);
+            }
         }
     }
 
@@ -164,6 +184,30 @@ public class DrinkDetail extends AppCompatActivity {
 
             editor.apply();
 
+            // Save the image if any image exists
+            if (image != null) {
+                File tempImage = new File(this.getFilesDir(), TEMP_IMG_NAME);
+                try {
+                    if(tempImage.createNewFile() || tempImage.exists()) {
+                        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                        image.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
+
+                        byte[] bitMapData = byteArrayOutputStream.toByteArray();
+
+                        FileOutputStream fileOutputStream = new FileOutputStream(tempImage);
+                        fileOutputStream.write(bitMapData);
+                        fileOutputStream.flush();
+                        fileOutputStream.close();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    Log.e(TAG, "Error creating file", e);
+                } finally {
+                    // Reset the image and imageview onStop.
+                    imageView.setImageBitmap(null);
+                    image = null;
+                }
+            }
         }
     }
 
@@ -296,14 +340,22 @@ public class DrinkDetail extends AppCompatActivity {
      * view to blank. The title, description and rating.
      */
     private void clearSharedPreferences() {
+        // Clear the shared preferences
         sharedPreferences = getSharedPreferences(Utils.SP_ADD_DRINK, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.clear();
         editor.apply();
 
+        // Clear the text fields
         txtTitleEdit.setText("");
         txtDescriptionEdit.setText("");
         ratingBarEdit.setRating(0);
+
+        // Clear the temporary image file
+        if(this.deleteFile(TEMP_IMG_NAME)) {
+            image = null;
+            Log.d(TAG, "Temporary image deleted successfully");
+        }
     }
 
     /**
