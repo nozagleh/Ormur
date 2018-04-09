@@ -43,7 +43,7 @@ public class DrinkDetail extends AppCompatActivity {
     private static final String TAG = "DrinkDetails";
 
     // Boolean to set if new object is being added or edited
-    Boolean isNew = false, isEdit = false, hasChanged = false, hasImageChanged = false;
+    Boolean isNew = false, isEdit = false, hasChanged = false, hasImageChanged = false, isSaving = false;
 
     // Actionbar menu
     Menu saveDeleteMenu;
@@ -139,6 +139,14 @@ public class DrinkDetail extends AppCompatActivity {
         }
 
         Locator.startListening(this);
+
+        if (isNew) {
+            sharedPreferences = getSharedPreferences(Utils.SP_ADD_DRINK, Context.MODE_PRIVATE);
+
+            txtTitleEdit.setText(sharedPreferences.getString("title",""));
+            txtDescriptionEdit.setText(sharedPreferences.getString("description", ""));
+            ratingBarEdit.setRating(sharedPreferences.getFloat("rating", 0));
+        }
     }
 
     @Override
@@ -146,6 +154,17 @@ public class DrinkDetail extends AppCompatActivity {
         super.onStop();
 
         Locator.stopListening();
+
+        if (isNew && !isSaving) {
+            sharedPreferences = getSharedPreferences(Utils.SP_ADD_DRINK, Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putString("title", txtTitleEdit.getText().toString());
+            editor.putString("description", txtDescriptionEdit.getText().toString());
+            editor.putFloat("rating", ratingBarEdit.getRating());
+
+            editor.apply();
+
+        }
     }
 
     /**
@@ -185,6 +204,9 @@ public class DrinkDetail extends AppCompatActivity {
             // Remove the current drink
             if (!isNew) {
                 FirebaseData.removeDrink(currentDrink.getId());
+            } else {
+                // Clear the shared preferences on delete if new
+                clearSharedPreferences();
             }
             // Finish the activity
             this.finish();
@@ -253,11 +275,6 @@ public class DrinkDetail extends AppCompatActivity {
         };
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-    }
-
     /**
      * Get the boolean to check if a new item is being added with the current intent.
      */
@@ -272,6 +289,21 @@ public class DrinkDetail extends AppCompatActivity {
             tempDescription = sharedPreferences.getString("description", "");
             tempRating = sharedPreferences.getFloat("rating", 0);
         }
+    }
+
+    /**
+     * Clear all the shared preferences. As well as set the data fields in the activity
+     * view to blank. The title, description and rating.
+     */
+    private void clearSharedPreferences() {
+        sharedPreferences = getSharedPreferences(Utils.SP_ADD_DRINK, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.clear();
+        editor.apply();
+
+        txtTitleEdit.setText("");
+        txtDescriptionEdit.setText("");
+        ratingBarEdit.setRating(0);
     }
 
     /**
@@ -695,6 +727,8 @@ public class DrinkDetail extends AppCompatActivity {
         if(!hasChanged && !hasImageChanged) {
             return;
         }
+
+        isSaving = true;
 
         // Establish a new data class
         Location location = Locator.getLocation();
