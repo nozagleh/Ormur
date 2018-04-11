@@ -14,8 +14,10 @@ import android.widget.TextView;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.storage.StorageReference;
 import com.nozagleh.ormur.App.OnListFragmentInteractionListener;
 import com.nozagleh.ormur.Models.Drink;
+import com.nozagleh.ormur.Models.DrinkList;
 
 import java.util.List;
 
@@ -26,10 +28,10 @@ import java.util.List;
 public class DrinkRecyclerViewAdapter extends RecyclerView.Adapter<DrinkRecyclerViewAdapter.ViewHolder> {
     private final String CLASS_TAG = "DrinkRecyclerViewA";
 
-    private final List<Drink> mDrinks;
+    private final DrinkList mDrinks;
     private final OnListFragmentInteractionListener mListener;
 
-    public DrinkRecyclerViewAdapter(List<Drink> drinks, OnListFragmentInteractionListener listener) {
+    public DrinkRecyclerViewAdapter(DrinkList drinks, OnListFragmentInteractionListener listener) {
         mDrinks = drinks;
         mListener = listener;
     }
@@ -43,32 +45,41 @@ public class DrinkRecyclerViewAdapter extends RecyclerView.Adapter<DrinkRecycler
 
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
-        holder.mItem = mDrinks.get(position);
-        holder.mIdView.setText(mDrinks.get(position).getTitle());
-        holder.mContentView.setText(mDrinks.get(position).getDescription());
-        holder.mRating.setText(String.valueOf(mDrinks.get(position).getRating()));
+        holder.mItem = mDrinks.getDrink(position);
+        holder.mIdView.setText(mDrinks.getDrink(position).getTitle());
+        holder.mContentView.setText(mDrinks.getDrink(position).getDescription());
+        holder.mRating.setText(String.valueOf(mDrinks.getDrink(position).getRating()));
         holder.mImage.setImageBitmap(holder.mItem.getImage());
 
         if (holder.mItem.getImage() == null) {
-            FirebaseData.getImage(mDrinks.get(position).getId(), new OnSuccessListener<byte[]>() {
-                @Override
-                public void onSuccess(byte[] bytes) {
-                    Bitmap image = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+            Bitmap cache = Utils.getCachedImage(holder.mImage.getContext(), holder.mItem.getId() + ".jpeg");
+            if (cache == null) {
+                FirebaseData.getImage(mDrinks.getDrink(position).getId(), new OnSuccessListener<byte[]>() {
+                    @Override
+                    public void onSuccess(byte[] bytes) {
+                        Bitmap image = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
 
-                    if (image != null) {
-                        holder.mImage.setDrawingCacheEnabled(true);
-                        holder.mImage.buildDrawingCache();
+                        if (image != null) {
+                            holder.mBitmap = image;
+                            holder.mImage.setDrawingCacheEnabled(true);
+                            holder.mImage.buildDrawingCache();
 
-                        holder.mImage.setImageBitmap(image);
+                            holder.mImage.setImageBitmap(image);
+                        }
                     }
-                }
-            }, new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception e) {
-                    Log.e(CLASS_TAG, e.getMessage());
-                    holder.mImage.setImageResource(R.mipmap.beer);
-                }
-            });
+                }, new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.e(CLASS_TAG, e.getMessage());
+                        holder.mImage.setImageResource(R.mipmap.beer);
+                    }
+                });
+            } else {
+                holder.mBitmap = cache;
+                holder.mImage.setDrawingCacheEnabled(true);
+                holder.mImage.buildDrawingCache();
+                holder.mImage.setImageBitmap(cache);
+            }
         } else {
             holder.mImage.setImageBitmap(holder.mItem.getImage());
         }
@@ -77,7 +88,10 @@ public class DrinkRecyclerViewAdapter extends RecyclerView.Adapter<DrinkRecycler
             @Override
             public void onClick(View view) {
                 if (null != mListener) {
-                    mListener.onListFragmentInteractionClick(holder.mItem);
+                    Drink clickedDrink = holder.mItem;
+                    clickedDrink.setImage(holder.mBitmap);
+
+                    mListener.onListFragmentInteractionClick(clickedDrink);
                 }
             }
         });
@@ -85,25 +99,27 @@ public class DrinkRecyclerViewAdapter extends RecyclerView.Adapter<DrinkRecycler
 
     @Override
     public int getItemCount() {
-        return mDrinks.size();
+        return mDrinks.listSize();
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
-        public final View mView;
-        public final TextView mIdView;
-        public final TextView mContentView;
-        public final TextView mRating;
+        private final View mView;
+        private final TextView mIdView;
+        private final TextView mContentView;
+        private final TextView mRating;
         public final ImageView mImage;
+        public Bitmap mBitmap;
 
         public Drink mItem;
 
-        public ViewHolder(View view) {
+        private ViewHolder(View view) {
             super(view);
             mView = view;
-            mIdView = (TextView) view.findViewById(R.id.id);
-            mContentView = (TextView) view.findViewById(R.id.content);
-            mRating = (TextView) view.findViewById(R.id.rating);
-            mImage = (ImageView) view.findViewById(R.id.image);
+            mIdView = view.findViewById(R.id.id);
+            mContentView = view.findViewById(R.id.content);
+            mRating = view.findViewById(R.id.rating);
+            mImage = view.findViewById(R.id.image);
+            mBitmap = null;
         }
 
         @Override

@@ -11,7 +11,12 @@ import android.view.Surface;
 import android.view.View;
 import android.view.WindowManager;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.ConnectException;
 
 /**
@@ -81,7 +86,7 @@ public class Utils {
      * @param context Current application context
      *
      * @return File The newly created file
-     * @throws Exception
+     * @throws Exception Something went wrong
      */
     public static File createTempImageFile(String prefix, String suffix, Context context) throws Exception {
         File tempDirectory = new File(context.getExternalFilesDir(
@@ -114,9 +119,81 @@ public class Utils {
      * @return boolean If the orientation matches landscape
      */
     public static boolean isLandscape(Context context) {
-        Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        int rotation = display.getRotation();
+        try {
+            Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+            int rotation = display.getRotation();
 
-        return (rotation == Surface.ROTATION_90 || rotation == Surface.ROTATION_270);
+            return (rotation == Surface.ROTATION_90 || rotation == Surface.ROTATION_270);
+        } catch (NullPointerException e) {
+            Log.e(TAG, "Error", e);
+        }
+
+        return false;
+    }
+
+    /**
+     * Cache a single image for easier fetching again.
+     *
+     * @param context The application context.
+     * @param name The name of the file.
+     * @param image The image to cache.
+     * @return mixed File or null of Exception
+     */
+    public static File cacheImage(Context context, String name, Bitmap image) {
+        if (image == null) {
+            return null;
+        }
+
+        File file;
+        try {
+            file = new File(context.getFilesDir(), name);
+
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+            image.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
+
+            byte[] bitMapData = byteArrayOutputStream.toByteArray();
+
+            FileOutputStream fileOutputStream = new FileOutputStream(file);
+            fileOutputStream.write(bitMapData);
+            fileOutputStream.flush();
+            fileOutputStream.close();
+
+        } catch(IOException e) {
+            Log.e(TAG, "Could not create file", e);
+            return null;
+        }
+
+        return file;
+    }
+
+    /**
+     * Get a single cached image.
+     *
+     * @param context The application context
+     * @param fileName The name of the file.
+     * @return mixed Bitmap or null of no image found
+     */
+    public static Bitmap getCachedImage(Context context, String fileName) {
+        Bitmap image = null;
+        try {
+            FileInputStream fis = context.openFileInput(fileName);
+            image = BitmapFactory.decodeStream(fis);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return image;
+    }
+
+    /**
+     * Delete a single cached image.
+     *
+     * @param context The application context
+     * @param fileName The name of the file
+     * @return boolean If the operation was a success
+     */
+    public static boolean deleteCachedImage(Context context, String fileName) {
+        return context.deleteFile(fileName);
     }
 }

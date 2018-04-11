@@ -65,6 +65,8 @@ public class DrinkDetail extends AppCompatActivity {
     Bitmap image;
     // Drink image URI
     Uri imageURI;
+    // Image cache name
+    String imageLocation;
 
     // Display fields
     ImageView imageView;
@@ -554,6 +556,8 @@ public class DrinkDetail extends AppCompatActivity {
         currentDrink.setDescription(intent.getStringExtra("description"));
         currentDrink.setLocation(intent.getStringExtra("location"));
         currentDrink.setRating(intent.getDoubleExtra("rating",0));
+
+        imageLocation = intent.getStringExtra("cachedImage");
     }
 
     /**
@@ -579,30 +583,40 @@ public class DrinkDetail extends AppCompatActivity {
         // Set all fields values
         setFieldValues();
 
-        // Get the image from the firebase storage
-        FirebaseData.getImage(currentDrink.getId(), new OnSuccessListener<byte[]>() {
-            @Override
-            public void onSuccess(byte[] bytes) {
-                if (bytes != null) {
-                    image = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-                    image = Utils.getImageSize(image, Utils.ImageSizes.LARGE);
-                    imageView.setImageBitmap(image);
-                    imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                }
-            }
-        }, new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                // Get the HTTP response code
-                int httpResponseCode = ((StorageException) e).getHttpResultCode();
+        Log.d(TAG, "IMAGE LOCATION: " + imageLocation);
+        Bitmap cachedImage = Utils.getCachedImage(this, imageLocation);
+        Log.d(TAG, cachedImage == null ? "Image is null" : "Not null");
 
-                // Show a snackbar on failure, not 404
-                if (httpResponseCode != 404) {
-                    Snackbar snackbarFail = Snackbar.make(findViewById(R.id.drinkDetails),"Failed to fetch image",Snackbar.LENGTH_SHORT);
-                    snackbarFail.show();
+        if (cachedImage == null) {
+            // Get the image from the firebase storage
+            FirebaseData.getImage(currentDrink.getId(), new OnSuccessListener<byte[]>() {
+                @Override
+                public void onSuccess(byte[] bytes) {
+                    if (bytes != null) {
+                        image = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                        image = Utils.getImageSize(image, Utils.ImageSizes.LARGE);
+                        imageView.setImageBitmap(image);
+                        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                    }
                 }
-            }
-        });
+            }, new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    // Get the HTTP response code
+                    int httpResponseCode = ((StorageException) e).getHttpResultCode();
+
+                    // Show a snackbar on failure, not 404
+                    if (httpResponseCode != 404) {
+                        Snackbar snackbarFail = Snackbar.make(findViewById(R.id.drinkDetails),"Failed to fetch image",Snackbar.LENGTH_SHORT);
+                        snackbarFail.show();
+                    }
+                }
+            });
+        } else {
+            image = cachedImage;
+            imageView.setImageBitmap(image);
+            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        }
     }
 
     /**
@@ -748,7 +762,7 @@ public class DrinkDetail extends AppCompatActivity {
      * Shows or hides the image hint text and sets a on image, or textview click listener
      * for changing the current image.
      *
-     * @param imageChanging
+     * @param imageChanging If image is changing
      */
     private void prepareImageChange(Boolean imageChanging) {
         if (imageChanging) {
@@ -814,6 +828,9 @@ public class DrinkDetail extends AppCompatActivity {
         // If image is not empty, set the image
         if (image != null) {
             FirebaseData.setImage(key, image);
+
+            Utils.deleteCachedImage(this,key + ".jpeg");
+            Utils.cacheImage(this, key + ".jpeg", image);
             //FirebaseData.setImage(key, imageURI);
         }
 
