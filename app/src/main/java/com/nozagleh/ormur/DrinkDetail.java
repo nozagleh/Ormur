@@ -35,7 +35,13 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.storage.StorageException;
 import com.nozagleh.ormur.Models.Drink;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,7 +49,9 @@ public class DrinkDetail extends AppCompatActivity {
     private static final String TAG = "DrinkDetails";
 
     // Boolean to set if new object is being added or edited
-    Boolean isNew = false, isEdit = false, hasChanged = false, hasImageChanged = false;
+    Boolean isNew = false, isEdit = false, hasChanged = false, hasImageChanged = false, isSaving = false;
+
+    private static final String TEMP_IMG_NAME = "newImageAdded.jpeg";
 
     // Actionbar menu
     Menu saveDeleteMenu;
@@ -57,6 +65,8 @@ public class DrinkDetail extends AppCompatActivity {
     Bitmap image;
     // Drink image URI
     Uri imageURI;
+    // Image cache name
+    String imageLocation;
 
     // Display fields
     ImageView imageView;
@@ -139,6 +149,26 @@ public class DrinkDetail extends AppCompatActivity {
         }
 
         Locator.startListening(this);
+
+        if (isNew && !hasImageChanged) {
+            sharedPreferences = getSharedPreferences(Utils.SP_ADD_DRINK, Context.MODE_PRIVATE);
+
+            txtTitleEdit.setText(sharedPreferences.getString("title",""));
+            txtDescriptionEdit.setText(sharedPreferences.getString("description", ""));
+            ratingBarEdit.setRating(sharedPreferences.getFloat("rating", 0));
+
+            try {
+                FileInputStream fileInputStream = this.openFileInput(TEMP_IMG_NAME);
+
+                if(fileInputStream != null) {
+                    // Decode and get the image.
+                    image = BitmapFactory.decodeStream(fileInputStream);
+                    imageView.setImageBitmap(image);
+                }
+            } catch(Exception e) {
+                Log.e(TAG, "General file error", e);
+            }
+        }
     }
 
     @Override
@@ -146,6 +176,41 @@ public class DrinkDetail extends AppCompatActivity {
         super.onStop();
 
         Locator.stopListening();
+
+        if (isNew && !isSaving) {
+            sharedPreferences = getSharedPreferences(Utils.SP_ADD_DRINK, Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putString("title", txtTitleEdit.getText().toString());
+            editor.putString("description", txtDescriptionEdit.getText().toString());
+            editor.putFloat("rating", ratingBarEdit.getRating());
+
+            editor.apply();
+
+            // Save the image if any image exists
+            if (image != null) {
+                File tempImage = new File(this.getFilesDir(), TEMP_IMG_NAME);
+                try {
+                    if(tempImage.createNewFile() || tempImage.exists()) {
+                        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                        image.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
+
+                        byte[] bitMapData = byteArrayOutputStream.toByteArray();
+
+                        FileOutputStream fileOutputStream = new FileOutputStream(tempImage);
+                        fileOutputStream.write(bitMapData);
+                        fileOutputStream.flush();
+                        fileOutputStream.close();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    Log.e(TAG, "Error creating file", e);
+                } finally {
+                    // Reset the image and imageview onStop.
+                    imageView.setImageBitmap(null);
+                    image = null;
+                }
+            }
+        }
     }
 
     /**
@@ -185,6 +250,9 @@ public class DrinkDetail extends AppCompatActivity {
             // Remove the current drink
             if (!isNew) {
                 FirebaseData.removeDrink(currentDrink.getId());
+            } else {
+                // Clear the shared preferences on delete if new
+                clearSharedPreferences();
             }
             // Finish the activity
             this.finish();
@@ -253,11 +321,6 @@ public class DrinkDetail extends AppCompatActivity {
         };
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-    }
-
     /**
      * Get the boolean to check if a new item is being added with the current intent.
      */
@@ -271,6 +334,29 @@ public class DrinkDetail extends AppCompatActivity {
             tempTitle = sharedPreferences.getString("title","");
             tempDescription = sharedPreferences.getString("description", "");
             tempRating = sharedPreferences.getFloat("rating", 0);
+        }
+    }
+
+    /**
+     * Clear all the shared preferences. As well as set the data fields in the activity
+     * view to blank. The title, description and rating.
+     */
+    private void clearSharedPreferences() {
+        // Clear the shared preferences
+        sharedPreferences = getSharedPreferences(Utils.SP_ADD_DRINK, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.clear();
+        editor.apply();
+
+        // Clear the text fields
+        txtTitleEdit.setText("");
+        txtDescriptionEdit.setText("");
+        ratingBarEdit.setRating(0);
+
+        // Clear the temporary image file
+        if(this.deleteFile(TEMP_IMG_NAME)) {
+            image = null;
+            Log.d(TAG, "Temporary image deleted successfully");
         }
     }
 
@@ -470,6 +556,8 @@ public class DrinkDetail extends AppCompatActivity {
         currentDrink.setDescription(intent.getStringExtra("description"));
         currentDrink.setLocation(intent.getStringExtra("location"));
         currentDrink.setRating(intent.getDoubleExtra("rating",0));
+
+        imageLocation = intent.getStringExtra("cachedImage");
     }
 
     /**
@@ -495,30 +583,40 @@ public class DrinkDetail extends AppCompatActivity {
         // Set all fields values
         setFieldValues();
 
-        // Get the image from the firebase storage
-        FirebaseData.getImage(currentDrink.getId(), new OnSuccessListener<byte[]>() {
-            @Override
-            public void onSuccess(byte[] bytes) {
-                if (bytes != null) {
-                    image = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-                    image = Utils.getImageSize(image, Utils.ImageSizes.LARGE);
-                    imageView.setImageBitmap(image);
-                    imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                }
-            }
-        }, new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                // Get the HTTP response code
-                int httpResponseCode = ((StorageException) e).getHttpResultCode();
+        Log.d(TAG, "IMAGE LOCATION: " + imageLocation);
+        Bitmap cachedImage = Utils.getCachedImage(this, imageLocation);
+        Log.d(TAG, cachedImage == null ? "Image is null" : "Not null");
 
-                // Show a snackbar on failure, not 404
-                if (httpResponseCode != 404) {
-                    Snackbar snackbarFail = Snackbar.make(findViewById(R.id.drinkDetails),"Failed to fetch image",Snackbar.LENGTH_SHORT);
-                    snackbarFail.show();
+        if (cachedImage == null) {
+            // Get the image from the firebase storage
+            FirebaseData.getImage(currentDrink.getId(), new OnSuccessListener<byte[]>() {
+                @Override
+                public void onSuccess(byte[] bytes) {
+                    if (bytes != null) {
+                        image = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                        image = Utils.getImageSize(image, Utils.ImageSizes.LARGE);
+                        imageView.setImageBitmap(image);
+                        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                    }
                 }
-            }
-        });
+            }, new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    // Get the HTTP response code
+                    int httpResponseCode = ((StorageException) e).getHttpResultCode();
+
+                    // Show a snackbar on failure, not 404
+                    if (httpResponseCode != 404) {
+                        Snackbar snackbarFail = Snackbar.make(findViewById(R.id.drinkDetails),"Failed to fetch image",Snackbar.LENGTH_SHORT);
+                        snackbarFail.show();
+                    }
+                }
+            });
+        } else {
+            image = cachedImage;
+            imageView.setImageBitmap(image);
+            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        }
     }
 
     /**
@@ -664,7 +762,7 @@ public class DrinkDetail extends AppCompatActivity {
      * Shows or hides the image hint text and sets a on image, or textview click listener
      * for changing the current image.
      *
-     * @param imageChanging
+     * @param imageChanging If image is changing
      */
     private void prepareImageChange(Boolean imageChanging) {
         if (imageChanging) {
@@ -695,6 +793,8 @@ public class DrinkDetail extends AppCompatActivity {
         if(!hasChanged && !hasImageChanged) {
             return;
         }
+
+        isSaving = true;
 
         // Establish a new data class
         Location location = Locator.getLocation();
@@ -728,6 +828,9 @@ public class DrinkDetail extends AppCompatActivity {
         // If image is not empty, set the image
         if (image != null) {
             FirebaseData.setImage(key, image);
+
+            Utils.deleteCachedImage(this,key + ".jpeg");
+            Utils.cacheImage(this, key + ".jpeg", image);
             //FirebaseData.setImage(key, imageURI);
         }
 

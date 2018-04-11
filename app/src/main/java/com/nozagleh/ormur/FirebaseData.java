@@ -2,6 +2,7 @@ package com.nozagleh.ormur;
 
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
@@ -41,6 +42,8 @@ public class FirebaseData {
     private static FirebaseStorage storage = FirebaseStorage.getInstance();
     private static StorageReference storageReference = storage.getReference();
 
+    private static Boolean isListening = false;
+
     /**
      * Upload a drink to the firebase storage. Uses data from a drink object.
      *
@@ -78,6 +81,26 @@ public class FirebaseData {
         reference.child(getUser().getUid()).child(id).removeValue();
         // Call for a removal of the drink's image
         removeImage(id);
+    }
+
+    public static boolean listenForDrinkChanges(ValueEventListener listener) {
+        isListening = true;
+        DatabaseReference childReference = reference.child(getUser().getUid());
+        childReference.addValueEventListener(listener);
+
+        return isListening;
+    }
+
+    public static boolean stopListeningForDrinkChanges(ValueEventListener listener) {
+        isListening = false;
+        DatabaseReference child = reference.child(getUser().getUid());
+        child.removeEventListener(listener);
+
+        return isListening;
+    }
+
+    public static Boolean isListening() {
+        return isListening;
     }
 
     /**
@@ -136,7 +159,7 @@ public class FirebaseData {
      *
      * @param id ID of the object
      */
-    public static void removeImage(String id) {
+    private static void removeImage(String id) {
         StorageReference imageReference = storageReference.child("images/" + getUser().getUid() + "/" + id + ".jpg");
         imageReference.delete();
     }
@@ -146,7 +169,7 @@ public class FirebaseData {
      *
      * @return FirebaseUser The current firebase user
      */
-    public static FirebaseUser getUser() {
+    private static FirebaseUser getUser() {
         firebaseAuth = FirebaseAuth.getInstance();
 
         return firebaseAuth.getCurrentUser();
