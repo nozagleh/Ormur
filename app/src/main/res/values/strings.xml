@@ -45,4 +45,15 @@
     <string name="image_error">Could not fetch image</string>
     <string name="login_error">Could not login</string>
     <string name="nothing_here">Nothing here yet</string>
+
+    <!-- Navigation drawer -->
+    <string name="title_activity_nav_drawer">Ormur</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">Android Studio</string>
+    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_desc">Navigation header</string>
+
+    <string name="nav_item_list">List</string>
+    <string name="nav_item_settings">Settings</string>
 </resources>
