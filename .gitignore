@@ -9,3 +9,7 @@
 .externalNativeBuild
 
 *.pyc
+
+.idea/
+!.idea/caches
+!.idea/shelf
