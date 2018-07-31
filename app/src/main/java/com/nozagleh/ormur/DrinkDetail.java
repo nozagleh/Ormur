@@ -35,11 +35,9 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.storage.StorageException;
 import com.nozagleh.ormur.Models.Drink;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -92,7 +90,6 @@ public class DrinkDetail extends AppCompatActivity {
 
     // Floating edit action button
     FloatingActionButton editButton;
-
 
     SharedPreferences sharedPreferences;
 
@@ -242,6 +239,7 @@ public class DrinkDetail extends AppCompatActivity {
      */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        Log.d(TAG, item.toString());
         if (item.getItemId() == R.id.app_bar_save) {
             // Save the current drink
             saveDrink();
@@ -257,9 +255,13 @@ public class DrinkDetail extends AppCompatActivity {
             // Finish the activity
             this.finish();
             return true;
+        } else if (item.getItemId() == android.R.id.home) {
+            // Finish the activity on action bar up button
+            this.finish();
+            return true;
         }
 
-        return false;
+        return super.onOptionsItemSelected(item);
     }
 
     /**

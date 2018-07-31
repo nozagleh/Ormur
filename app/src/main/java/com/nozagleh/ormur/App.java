@@ -38,6 +38,9 @@ public class App extends AppCompatActivity {
     // Floating action button
     private FloatingActionButton fabAddDrink;
 
+    // Bottom nav bar
+    private BottomNavigationView navigation;
+
     // Setup the recyclerview
     private RecyclerView mRecyclerView;
     private RecyclerView.Adapter mAdapter;
@@ -74,7 +77,7 @@ public class App extends AppCompatActivity {
 
         listOfDrinks = new DrinkList();
 
-        BottomNavigationView navigation = findViewById(R.id.navigation);
+        navigation = findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
     }
 
@@ -82,6 +85,9 @@ public class App extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
 
+        navigation.setSelectedItemId(R.id.navigation_home);
+
+        Log.d(ACTIVITY_TAG, "ACTIVITY RESUMED");
         initRecycler();
 
         // fetch datasnapshot
@@ -185,15 +191,14 @@ public class App extends AppCompatActivity {
                     Utils.showSnackBar(findViewById(R.id.list), getString(R.string.list_error));
                 }
             });
-        } else {
-            stopListening();
-            listenForDrinks();
         }
     }
 
-    private void stopListening() {
-        FirebaseData.stopListeningForDrinkChanges(eventListener);
-    }
+    /*private void stopListening() {
+        if (eventListener != null) {
+            FirebaseData.stopListeningForDrinkChanges(eventListener);
+        }
+    }*/
 
     private void reloadListData() {
         if (listSnapShot == null) {
