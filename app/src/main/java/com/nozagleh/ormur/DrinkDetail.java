@@ -41,6 +41,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class DrinkDetail extends AppCompatActivity {
@@ -174,6 +175,10 @@ public class DrinkDetail extends AppCompatActivity {
 
         Locator.stopListening();
 
+        Log.d(TAG, "ACTIVITY IS CLOSING");
+        Log.d(TAG, "IS NEW: " + isNew.toString());
+        Log.d(TAG, "IS SAVING: " + isSaving.toString());
+
         if (isNew && !isSaving) {
             sharedPreferences = getSharedPreferences(Utils.SP_ADD_DRINK, Context.MODE_PRIVATE);
             SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -207,6 +212,8 @@ public class DrinkDetail extends AppCompatActivity {
                     image = null;
                 }
             }
+        } else {
+            clearSharedPreferences();
         }
     }
 
@@ -559,6 +566,10 @@ public class DrinkDetail extends AppCompatActivity {
         currentDrink.setLocation(intent.getStringExtra("location"));
         currentDrink.setRating(intent.getDoubleExtra("rating",0));
 
+        // Get the date fields
+        currentDrink.setCreatedDate(intent.getStringExtra("createdDate"));
+        currentDrink.setUpdatedDate(intent.getStringExtra("updatedDate"));
+
         imageLocation = intent.getStringExtra("cachedImage");
     }
 
@@ -586,12 +597,15 @@ public class DrinkDetail extends AppCompatActivity {
         setFieldValues();
 
         Log.d(TAG, "IMAGE LOCATION: " + imageLocation);
-        Bitmap cachedImage = Utils.getCachedImage(this, imageLocation);
+        Bitmap cachedImage = Utils.getCachedImage(this, currentDrink.getId() + ".jpeg");
         Log.d(TAG, cachedImage == null ? "Image is null" : "Not null");
 
+        final Context thisContext = this;
+
         if (cachedImage == null) {
+            Log.d(TAG, "Fetching image");
             // Get the image from the firebase storage
-            FirebaseData.getImage(currentDrink.getId(), new OnSuccessListener<byte[]>() {
+            FirebaseData.getImage(currentDrink.getId(), 0, new OnSuccessListener<byte[]>() {
                 @Override
                 public void onSuccess(byte[] bytes) {
                     if (bytes != null) {
@@ -599,6 +613,7 @@ public class DrinkDetail extends AppCompatActivity {
                         image = Utils.getImageSize(image, Utils.ImageSizes.LARGE);
                         imageView.setImageBitmap(image);
                         imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                        Utils.cacheImage(thisContext, currentDrink.getId() + ".jpeg", image);
                     }
                 }
             }, new OnFailureListener() {
@@ -615,6 +630,7 @@ public class DrinkDetail extends AppCompatActivity {
                 }
             });
         } else {
+            Log.d(TAG, "Getting cached image");
             image = cachedImage;
             imageView.setImageBitmap(image);
             imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
@@ -817,6 +833,14 @@ public class DrinkDetail extends AppCompatActivity {
         currentDrink.setDescription(txtDescription.getText().toString());
         currentDrink.setRating(Double.valueOf(ratingBar.getRating()));
 
+        Date currentDateTime = new Date();
+        currentDateTime.getTime();
+        Log.d(TAG,"CREATED: " + currentDrink.getCreatedDate());
+        if(currentDrink.getCreatedDate() == null) {
+            currentDrink.setCreatedDate(currentDateTime.toString());
+        }
+        currentDrink.setUpdatedDate(currentDateTime.toString());
+
         // Set the drink
         String key;
         if (currentDrink.getId() != null) {
@@ -847,5 +871,7 @@ public class DrinkDetail extends AppCompatActivity {
 
         // Set to non editing mode
         setIsEditing();
+
+        finish();
     }
 }

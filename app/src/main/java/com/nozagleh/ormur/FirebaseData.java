@@ -2,7 +2,6 @@ package com.nozagleh.ormur;
 
 import android.graphics.Bitmap;
 import android.net.Uri;
-import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
@@ -43,6 +42,7 @@ public class FirebaseData {
     private static StorageReference storageReference = storage.getReference();
 
     private static Boolean isListening = false;
+    private static ValueEventListener activeListener;
 
     /**
      * Upload a drink to the firebase storage. Uses data from a drink object.
@@ -57,6 +57,7 @@ public class FirebaseData {
             DatabaseReference childReference = reference.child(getUser().getUid()).child(id);
             key = childReference.getKey();
             childReference.setValue(drink);
+
         } else {
             final DatabaseReference childReference = reference.child(getUser().getUid());
             key = childReference.push().getKey();
@@ -84,6 +85,7 @@ public class FirebaseData {
     }
 
     public static boolean listenForDrinkChanges(ValueEventListener listener) {
+        activeListener = listener;
         isListening = true;
         DatabaseReference childReference = reference.child(getUser().getUid());
         childReference.addValueEventListener(listener);
@@ -91,10 +93,10 @@ public class FirebaseData {
         return isListening;
     }
 
-    public static boolean stopListeningForDrinkChanges(ValueEventListener listener) {
+    public static boolean stopListeningForDrinkChanges() {
         isListening = false;
         DatabaseReference child = reference.child(getUser().getUid());
-        child.removeEventListener(listener);
+        child.removeEventListener(activeListener);
 
         return isListening;
     }
@@ -120,7 +122,7 @@ public class FirebaseData {
      * @param listener The return listener, called when fetching is finished
      * @param failListener The return failure listener, called if fetch is failed
      */
-    public static void getImage(final String id, OnSuccessListener<byte[]> listener, OnFailureListener failListener) {
+    public static void getImage(final String id, final int pos, OnSuccessListener<byte[]> listener, OnFailureListener failListener) {
         StorageReference imageReference = storageReference.child("images/" + getUser().getUid() + "/" + id + ".jpg");
         imageReference.getBytes(Long.MAX_VALUE).addOnSuccessListener(listener).addOnFailureListener(failListener);
     }

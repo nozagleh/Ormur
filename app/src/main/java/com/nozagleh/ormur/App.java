@@ -1,9 +1,9 @@
 package com.nozagleh.ormur;
 
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
@@ -14,11 +14,14 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
@@ -26,8 +29,6 @@ import com.nozagleh.ormur.Models.Drink;
 import com.nozagleh.ormur.Models.DrinkList;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
 public class App extends AppCompatActivity {
     private static String ACTIVITY_TAG = "App";
@@ -79,6 +80,18 @@ public class App extends AppCompatActivity {
 
         navigation = findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
+
+        // Test crash button
+        /*Button crashButton = new Button(this);
+        crashButton.setText("Crash!");
+        crashButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View view) {
+                Crashlytics.getInstance().crash(); // Force a crash
+            }
+        });
+        addContentView(crashButton,
+                new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT));*/
     }
 
     @Override
@@ -87,11 +100,20 @@ public class App extends AppCompatActivity {
 
         navigation.setSelectedItemId(R.id.navigation_home);
 
+        listOfDrinks = new DrinkList();
+
         Log.d(ACTIVITY_TAG, "ACTIVITY RESUMED");
         initRecycler();
 
         // fetch datasnapshot
         listenForDrinks();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        FirebaseData.stopListeningForDrinkChanges();
     }
 
     @Override
@@ -144,6 +166,8 @@ public class App extends AppCompatActivity {
                 reloadListData();
             }
         });
+
+        mSwipeRefreshLayout.setRefreshing(true);
     }
 
     /**
@@ -166,6 +190,20 @@ public class App extends AppCompatActivity {
 
         mAdapter = setListAdapter();
         mRecyclerView.setAdapter(mAdapter);
+
+        ItemTouchHelper swipeRightAction = new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.RIGHT) {
+            @Override
+            public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
+
+            }
+        });
+
+        swipeRightAction.attachToRecyclerView(mRecyclerView);
 
         // Init the swipe to refresh funcion
         initSwipeToRefresh();
@@ -205,9 +243,13 @@ public class App extends AppCompatActivity {
             return;
         }
 
+        int counter = 0;
+        Log.d(ACTIVITY_TAG, "LIST SIZE IS: " + listSnapShot.getChildrenCount());
+
         for (DataSnapshot data : listSnapShot.getChildren()) {
+            final int drinkCount = counter;
             // Create a new drink object
-            Drink drink = new Drink();
+            final Drink drink = new Drink();
 
             // Get title first so we can check the value
             drink.setTitle((String) data.child("title").getValue());
@@ -216,6 +258,13 @@ public class App extends AppCompatActivity {
             drink.setId(data.getKey());
             drink.setDescription((String) data.child("description").getValue());
             drink.setLocation((String) data.child("location").getValue());
+
+            Log.d(ACTIVITY_TAG, "CREATED: " + data.child("createdDate").getValue());
+            Log.d(ACTIVITY_TAG, "UPDATED: " + data.child("updatedDate").getValue());
+
+            // Set the dates
+            drink.setCreatedDate((String) data.child("createdDate").getValue());
+            drink.setUpdatedDate((String) data.child("updatedDate").getValue());
 
             // Check if rating comes as long or double
             if (data.child("rating").getValue() instanceof Long) {
@@ -242,8 +291,36 @@ public class App extends AppCompatActivity {
                 listOfDrinks.addDrink(drink);
             }
 
+            Bitmap img = Utils.getCachedImage(this, drink.getId() + ".jpeg");
+
+            if (img == null) {
+                FirebaseData.getImage(drink.getId(), drinkCount, new OnSuccessListener<byte[]>() {
+                    @Override
+                    public void onSuccess(byte[] bytes) {
+                        Bitmap image = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+
+                        if (image != null) {
+                            listOfDrinks.getDrink(drinkCount).setImage(image);
+                            mAdapter.notifyItemChanged(drinkCount);
+                        }
+                    }
+                }, new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.e(ACTIVITY_TAG, e.getMessage());
+                        //drink.setImage(R.mipmap.beer);
+                    }
+                });
+            } else {
+                drink.setImage(img);
+            }
+
+            counter++;
+
             mAdapter.notifyDataSetChanged();
         }
+
+        Log.d(ACTIVITY_TAG, "THE COUNT IS: " + counter);
 
         // Check if is refreshing
         if(mSwipeRefreshLayout.isRefreshing()) {
@@ -307,6 +384,8 @@ public class App extends AppCompatActivity {
 
         // Start the activity
         startActivity(drinkDetails);
+
+        FirebaseData.stopListeningForDrinkChanges();
     }
 
     /**
@@ -327,6 +406,8 @@ public class App extends AppCompatActivity {
         drinkDetails.putExtra("description", item.getDescription());
         drinkDetails.putExtra("location", item.getLocation());
         drinkDetails.putExtra("rating", item.getRating());
+        drinkDetails.putExtra("createdDate", item.getCreatedDate());
+        drinkDetails.putExtra("updatedDate", item.getUpdatedDate());
 
         if (item.getImage() != null) {
             File file = Utils.cacheImage(this, item.getId() + ".jpeg", item.getImage());
@@ -335,6 +416,9 @@ public class App extends AppCompatActivity {
 
         // Start the activity
         startActivity(drinkDetails);
+
+        FirebaseData.stopListeningForDrinkChanges();
+
     }
 
     /**

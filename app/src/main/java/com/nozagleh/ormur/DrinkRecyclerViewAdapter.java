@@ -47,33 +47,17 @@ public class DrinkRecyclerViewAdapter extends RecyclerView.Adapter<DrinkRecycler
     public void onBindViewHolder(final ViewHolder holder, int position) {
         holder.mItem = mDrinks.getDrink(position);
         holder.mIdView.setText(mDrinks.getDrink(position).getTitle());
-        holder.mContentView.setText(mDrinks.getDrink(position).getDescription());
+        if (holder.mItem.getDescription().equals("")) {
+            holder.mContentView.setVisibility(View.GONE);
+        } else {
+            holder.mContentView.setText(mDrinks.getDrink(position).getDescription());
+        }
         holder.mRating.setText(String.valueOf(mDrinks.getDrink(position).getRating()));
-        holder.mImage.setImageBitmap(holder.mItem.getImage());
 
         if (holder.mItem.getImage() == null) {
             Bitmap cache = Utils.getCachedImage(holder.mImage.getContext(), holder.mItem.getId() + ".jpeg");
             if (cache == null) {
-                FirebaseData.getImage(mDrinks.getDrink(position).getId(), new OnSuccessListener<byte[]>() {
-                    @Override
-                    public void onSuccess(byte[] bytes) {
-                        Bitmap image = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-
-                        if (image != null) {
-                            holder.mBitmap = image;
-                            holder.mImage.setDrawingCacheEnabled(true);
-                            holder.mImage.buildDrawingCache();
-
-                            holder.mImage.setImageBitmap(image);
-                        }
-                    }
-                }, new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.e(CLASS_TAG, e.getMessage());
-                        holder.mImage.setImageResource(R.mipmap.beer);
-                    }
-                });
+                holder.mImage.setVisibility(View.GONE);
             } else {
                 holder.mBitmap = cache;
                 holder.mImage.setDrawingCacheEnabled(true);

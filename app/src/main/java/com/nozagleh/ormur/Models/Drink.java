@@ -5,9 +5,6 @@ import android.graphics.Bitmap;
 import com.google.firebase.database.Exclude;
 import com.google.firebase.database.IgnoreExtraProperties;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-
 /**
  * A custom classs object that represents a drink object.
  *
@@ -22,6 +19,8 @@ public class Drink {
     private String description;
     private String location;
     private Bitmap image;
+    private String createdDate;
+    private String updatedDate;
 
     /**
      * Empty constructor
@@ -37,12 +36,16 @@ public class Drink {
      * @param description The drink description
      * @param location The drink location (where the user was when the drink was added)
      */
-    public Drink(String id, String title, Double rating, String description, String location) {
+    public Drink(String id, String title, Double rating, String description, String location, String createdDate, String updatedDate) {
         this.id = id;
         this.title = title;
         this.rating = rating;
         this.description = description;
         this.location = location;
+
+        // Set drink dates
+        this.createdDate = createdDate;
+        this.updatedDate = updatedDate;
     }
 
     /**
@@ -155,5 +158,41 @@ public class Drink {
     @Exclude
     public void setImage(Bitmap image) {
         this.image = image;
+    }
+
+    /**
+     * Get the created date of the drink.
+     *
+     * @return String Created date
+     */
+    public String getCreatedDate() {
+        return this.createdDate;
+    }
+
+    /**
+     * Set the created date of the drink.
+     *
+     * @param date The date it was created
+     */
+    public void setCreatedDate(String date) {
+        this.createdDate = date;
+    }
+
+    /**
+     * Get the date when the drink was last updated.
+     *
+     * @return String Last updated date
+     */
+    public String getUpdatedDate() {
+        return this.updatedDate;
+    }
+
+    /**
+     * Set the last updated date.
+     *
+     * @param date Last updated date
+     */
+    public void setUpdatedDate(String date) {
+        this.updatedDate = date;
     }
 }

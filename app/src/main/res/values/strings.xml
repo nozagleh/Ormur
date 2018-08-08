@@ -1,9 +1,9 @@
 <resources>
     <!-- Application name -->
-    <string name="app_name">Ormur</string>
+    <string name="app_name">WhatDrink</string>
 
     <!-- Activities -->
-    <string name="title_activity_app">Ormur</string>
+    <string name="title_activity_app">WhatDrink</string>
 
     <string name="action_settings">Settings</string>
 
