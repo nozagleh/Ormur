@@ -1,5 +1,8 @@
 package com.nozagleh.ormur.Models;
 
+import android.arch.persistence.room.ColumnInfo;
+import android.arch.persistence.room.Entity;
+import android.arch.persistence.room.PrimaryKey;
 import android.graphics.Bitmap;
 
 import com.google.firebase.database.Exclude;
@@ -11,15 +14,22 @@ import com.google.firebase.database.IgnoreExtraProperties;
  * Created by arnarfreyr on 13/02/2018.
  */
 
+@Entity
 @IgnoreExtraProperties
 public class Drink {
     private String id;
+    @ColumnInfo(name = "title")
     private String title;
+    @ColumnInfo(name = "rating")
     private Double rating;
+    @ColumnInfo(name = "description")
     private String description;
+    @ColumnInfo(name = "location")
     private String location;
     private Bitmap image;
+    @ColumnInfo(name = "created_date")
     private String createdDate;
+    @ColumnInfo(name = "updated_date")
     private String updatedDate;
 
     /**
