@@ -62,6 +62,8 @@ public class App extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_app);
 
+        Statics.setAppContext(this);
+
         toolbar = findViewById(R.id.toolBar);
         toolbar.setTitleTextColor(getResources().getColor(R.color.colorWhite));
         toolbar.setNavigationIcon(R.mipmap.ic_launcher_round);

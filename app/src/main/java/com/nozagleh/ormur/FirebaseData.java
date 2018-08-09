@@ -4,6 +4,7 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -52,6 +53,13 @@ public class FirebaseData {
      * @return ID key
      */
     public static String setDrink(Drink drink, String id) {
+        if (!NetworkChecker.hasNetwork(Statics.appContext)) {
+            Toast toast = Toast.makeText(Statics.appContext, Statics.appContext.getText(R.string.no_internet), Toast.LENGTH_SHORT);
+            toast.show();
+
+            // TODO cache drinks for syncing later, replace offline drink with just drink (include booleans for checking)
+        }
+
         String key;
         if (id != null) {
             DatabaseReference childReference = reference.child(getUser().getUid()).child(id);
@@ -103,16 +111,6 @@ public class FirebaseData {
 
     public static Boolean isListening() {
         return isListening;
-    }
-
-    /**
-     * Get all drinks.
-     *
-     * @param listener Return listener when drinks have been fetched
-     */
-    public static void getDrinks(ValueEventListener listener) {
-        DatabaseReference childReference = reference.child(getUser().getUid());
-        childReference.addListenerForSingleValueEvent(listener);
     }
 
     /**
