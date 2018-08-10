@@ -212,7 +212,7 @@ public class DrinkDetail extends AppCompatActivity {
                     image = null;
                 }
             }
-        } else {
+        } else if(isNew && !isSaving) {
             clearSharedPreferences();
         }
     }
