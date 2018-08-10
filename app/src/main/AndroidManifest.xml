@@ -26,6 +26,10 @@
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyBzpwYVILT6JhIdPdbk00UqEIRFHL7M4bA" />
+        
+        <service android:name=".SyncOfflineDrinksService"
+            android:label="Syncs unsynced drink entries"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
 
         <provider
             android:name="android.support.v4.content.FileProvider"
