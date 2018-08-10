@@ -19,6 +19,8 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.nozagleh.ormur.Models.Drink;
+import com.nozagleh.ormur.Models.OfflineDrink;
+import com.nozagleh.ormur.Models.OfflineDrinkDao;
 
 import java.io.ByteArrayOutputStream;
 
@@ -57,7 +59,11 @@ public class FirebaseData {
             Toast toast = Toast.makeText(Statics.appContext, Statics.appContext.getText(R.string.no_internet), Toast.LENGTH_SHORT);
             toast.show();
 
+            drink.setOffline(true);
+            drink.setSynced(false);
+
             // TODO cache drinks for syncing later, replace offline drink with just drink (include booleans for checking)
+            Statics.localDb.offlineDrinkDao().insertSingle(drink);
         }
 
         String key;
