@@ -63,6 +63,7 @@ public class App extends AppCompatActivity {
         setContentView(R.layout.activity_app);
 
         Statics.setAppContext(this);
+        Statics.setLocalDbConnection();
 
         toolbar = findViewById(R.id.toolBar);
         toolbar.setTitleTextColor(getResources().getColor(R.color.colorWhite));

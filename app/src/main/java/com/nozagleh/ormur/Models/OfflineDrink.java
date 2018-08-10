@@ -2,11 +2,13 @@ package com.nozagleh.ormur.Models;
 
 import android.arch.persistence.room.ColumnInfo;
 
-public class OfflineDrink extends Drink {
+public class OfflineDrink {
     @ColumnInfo(name = "is_synced")
     private Boolean isSynced;
     @ColumnInfo(name = "is_offline")
     private Boolean isOffline;
+
+    public OfflineDrink(){}
 
     public OfflineDrink(Boolean isSynced, Boolean isOffline) {
         this.isSynced = isSynced;

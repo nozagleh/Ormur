@@ -16,7 +16,7 @@ import com.google.firebase.database.IgnoreExtraProperties;
 
 @Entity
 @IgnoreExtraProperties
-public class Drink {
+public class Drink extends OfflineDrink {
     private String id;
     @ColumnInfo(name = "title")
     private String title;
@@ -46,7 +46,9 @@ public class Drink {
      * @param description The drink description
      * @param location The drink location (where the user was when the drink was added)
      */
-    public Drink(String id, String title, Double rating, String description, String location, String createdDate, String updatedDate) {
+    public Drink(Boolean isSynced, Boolean isOffline, String id, String title, Double rating, String description, String location, String createdDate, String updatedDate) {
+        super(isSynced, isOffline);
+
         this.id = id;
         this.title = title;
         this.rating = rating;
