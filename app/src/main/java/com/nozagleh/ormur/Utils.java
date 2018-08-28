@@ -1,5 +1,8 @@
 package com.nozagleh.ormur;
 
+import android.app.job.JobInfo;
+import android.app.job.JobScheduler;
+import android.content.ComponentName;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -10,6 +13,8 @@ import android.view.Display;
 import android.view.Surface;
 import android.view.View;
 import android.view.WindowManager;
+
+import com.nozagleh.ormur.Models.Drink;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -193,5 +198,16 @@ public class Utils {
      */
     public static boolean deleteCachedImage(Context context, String fileName) {
         return context.deleteFile(fileName);
+    }
+
+    /**
+     * Assemble and return a temporary cached drink image name.
+     * Based on drink title.
+     *
+     * @param drink Drink instance
+     * @return string Temporary drink image name
+     */
+    public static String getTempDrinkImgName(Drink drink) {
+        return drink.getCreatedDate() + "-" + drink.getTitle().replace(" ", "-").toLowerCase();
     }
 }

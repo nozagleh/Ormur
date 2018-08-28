@@ -2,6 +2,7 @@ package com.nozagleh.ormur.Models;
 
 import android.arch.persistence.room.ColumnInfo;
 import android.arch.persistence.room.Entity;
+import android.arch.persistence.room.Ignore;
 import android.arch.persistence.room.PrimaryKey;
 import android.graphics.Bitmap;
 
@@ -14,9 +15,13 @@ import com.google.firebase.database.IgnoreExtraProperties;
  * Created by arnarfreyr on 13/02/2018.
  */
 
-@Entity
+@Entity(tableName = "drinks")
 @IgnoreExtraProperties
-public class Drink extends OfflineDrink {
+public class Drink {
+    @PrimaryKey(autoGenerate = true)
+    private int uid;
+
+    @ColumnInfo(name = "firebase_id")
     private String id;
     @ColumnInfo(name = "title")
     private String title;
@@ -26,11 +31,19 @@ public class Drink extends OfflineDrink {
     private String description;
     @ColumnInfo(name = "location")
     private String location;
+    @Ignore
     private Bitmap image;
     @ColumnInfo(name = "created_date")
     private String createdDate;
     @ColumnInfo(name = "updated_date")
     private String updatedDate;
+
+    @ColumnInfo(name = "is_synced")
+    private Boolean isSynced;
+    @ColumnInfo(name = "is_offline")
+    private Boolean isOffline;
+    @ColumnInfo(name = "cached_img_id")
+    private String cachedImgId;
 
     /**
      * Empty constructor
@@ -46,8 +59,10 @@ public class Drink extends OfflineDrink {
      * @param description The drink description
      * @param location The drink location (where the user was when the drink was added)
      */
+    @Ignore
     public Drink(Boolean isSynced, Boolean isOffline, String id, String title, Double rating, String description, String location, String createdDate, String updatedDate) {
-        super(isSynced, isOffline);
+        this.isSynced = isSynced;
+        this.isOffline = isOffline;
 
         this.id = id;
         this.title = title;
@@ -206,5 +221,81 @@ public class Drink extends OfflineDrink {
      */
     public void setUpdatedDate(String date) {
         this.updatedDate = date;
+    }
+
+    /**
+     * Get the drink's Firebase uid.
+     *
+     * @return int UID
+     */
+    @Exclude
+    public int getUid() {
+        return uid;
+    }
+
+    /**
+     * Set the drink's Firebase uid.
+     *
+     * @param uid int Firebase UID
+     */
+    @Exclude
+    public void setUid(int uid) {
+        this.uid = uid;
+    }
+
+    /**
+     * Get if the drink is synced or not.
+     *
+     * @return boolean Is synced
+     */
+    public Boolean getSynced() {
+        return isSynced;
+    }
+
+    /**
+     * Set the sync status of the drink.
+     *
+     * @param synced boolean Is synced
+     */
+    public void setSynced(Boolean synced) {
+        isSynced = synced;
+    }
+
+    /**
+     * Get if the drink is only stored offline.
+     *
+     * @return boolean is stored offline
+     */
+    public Boolean getOffline() {
+        return isOffline;
+    }
+
+    /**
+     * Set the storage status of the drink.
+     *
+     * @param offline boolean is stored offline
+     */
+    public void setOffline(Boolean offline) {
+        isOffline = offline;
+    }
+
+    /**
+     * Get cached image id.
+     *
+     * @return string cache image id
+     */
+    @Exclude
+    public String getCachedImgId() {
+        return cachedImgId;
+    }
+
+    /**
+     * Set the cache image id.
+     *
+     * @param cachedImgId string id
+     */
+    @Exclude
+    public void setCachedImgId(String cachedImgId) {
+        this.cachedImgId = cachedImgId;
     }
 }

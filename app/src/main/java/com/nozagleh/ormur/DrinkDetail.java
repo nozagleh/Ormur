@@ -745,6 +745,9 @@ public class DrinkDetail extends AppCompatActivity {
         }
     }
 
+    /**
+     * Set the image of the drink.
+     */
     private void setImage() {
         // Set a content resolver notifier
         this.getContentResolver().notifyChange(imageURI, null);
@@ -853,10 +856,16 @@ public class DrinkDetail extends AppCompatActivity {
 
         // If image is not empty, set the image
         if (image != null) {
-            FirebaseData.setImage(key, image);
+            String cachedTempImgName = Utils.getTempDrinkImgName(currentDrink);
+            Utils.cacheImage(this, cachedTempImgName, image);
 
-            Utils.deleteCachedImage(this,key + ".jpeg");
-            Utils.cacheImage(this, key + ".jpeg", image);
+            if (key != null) {
+                FirebaseData.setImage(key, image);
+
+                Utils.deleteCachedImage(this,key + ".jpeg");
+                Utils.cacheImage(this, key + ".jpeg", image);
+            }
+
             //FirebaseData.setImage(key, imageURI);
         }
 

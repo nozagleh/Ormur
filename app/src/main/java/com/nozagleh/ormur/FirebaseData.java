@@ -19,8 +19,6 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.nozagleh.ormur.Models.Drink;
-import com.nozagleh.ormur.Models.OfflineDrink;
-import com.nozagleh.ormur.Models.OfflineDrinkDao;
 
 import java.io.ByteArrayOutputStream;
 
@@ -58,6 +56,8 @@ public class FirebaseData {
         if (!NetworkChecker.hasNetwork(Statics.appContext)) {
             Toast toast = Toast.makeText(Statics.appContext, Statics.appContext.getText(R.string.no_internet), Toast.LENGTH_SHORT);
             toast.show();
+
+            Log.d(CLASS_TAG, "No internet connection");
 
             drink.setOffline(true);
             drink.setSynced(false);
@@ -115,6 +115,11 @@ public class FirebaseData {
         return isListening;
     }
 
+    /**
+     * Return if the application is listening to its storage.
+     *
+     * @return boolean is listening
+     */
     public static Boolean isListening() {
         return isListening;
     }
@@ -155,7 +160,7 @@ public class FirebaseData {
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                 // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
-                Uri downloadUrl = taskSnapshot.getDownloadUrl();
+                Uri downloadUrl = taskSnapshot.getUploadSessionUri();
             }
         });
     }

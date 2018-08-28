@@ -27,6 +27,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
 import com.nozagleh.ormur.Models.Drink;
 import com.nozagleh.ormur.Models.DrinkList;
+import com.nozagleh.ormur.jobManager.JobHandler;
 
 import java.io.File;
 
@@ -64,6 +65,10 @@ public class App extends AppCompatActivity {
 
         Statics.setAppContext(this);
         Statics.setLocalDbConnection();
+        NotificationCentral.createNotificationChannel();
+
+        JobHandler.initJobDispatcher(this);
+        JobHandler.startSyncJob();
 
         toolbar = findViewById(R.id.toolBar);
         toolbar.setTitleTextColor(getResources().getColor(R.color.colorWhite));
@@ -377,6 +382,12 @@ public class App extends AppCompatActivity {
 
     };
 
+    /**
+     * Add a new drink.
+     *
+     * Start the new drink activity based on a new drink is being added,
+     * not an older one is being edited.
+     */
     private void addNewDrink() {
         // Call for an empty drink details view to be started
         // For adding a new drink
@@ -421,7 +432,6 @@ public class App extends AppCompatActivity {
         startActivity(drinkDetails);
 
         FirebaseData.stopListeningForDrinkChanges();
-
     }
 
     /**

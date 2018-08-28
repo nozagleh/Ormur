@@ -46,4 +46,11 @@
     <string name="login_error">Could not login</string>
     <string name="nothing_here">Nothing here yet</string>
     <string name="no_internet">No network connection</string>
+
+    <!-- Notifications -->
+    <string name="channel_name">WhatDrinks sync notifications</string>
+    <string name="channel_description">Notifies the user about unsynced entries when they are synced.</string>
+    <string name="notification_synced_singular">%d new drink entry synced</string>
+    <string name="notification_synced_plural">%d new drinks entries synced</string>
+    <string name="notification_synced_text">One or more drinks have been synced since last online.</string>
 </resources>
