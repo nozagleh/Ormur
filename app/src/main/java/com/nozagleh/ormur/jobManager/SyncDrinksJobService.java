@@ -1,15 +1,11 @@
 package com.nozagleh.ormur.jobManager;
 
-import android.util.Log;
-import android.widget.Toast;
-
 import com.firebase.jobdispatcher.JobParameters;
 import com.firebase.jobdispatcher.JobService;
 import com.nozagleh.ormur.FirebaseData;
 import com.nozagleh.ormur.Models.Drink;
 import com.nozagleh.ormur.NetworkChecker;
 import com.nozagleh.ormur.NotificationCentral;
-import com.nozagleh.ormur.R;
 import com.nozagleh.ormur.Statics;
 
 import java.util.ArrayList;
