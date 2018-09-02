@@ -2,7 +2,7 @@
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@color/colorPrimary"/>
     <item>
-        <bitmap android:src="@drawable/ic_save_white_24px"
+        <bitmap android:src="@drawable/ormur_logo_small"
             android:gravity="center"/>
     </item>
 </layer-list>
