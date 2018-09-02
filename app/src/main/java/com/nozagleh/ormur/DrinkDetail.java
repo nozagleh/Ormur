@@ -881,6 +881,8 @@ public class DrinkDetail extends AppCompatActivity {
         // Set to non editing mode
         setIsEditing();
 
+        clearSharedPreferences();
+
         finish();
     }
 }
