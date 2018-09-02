@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drinkDetails"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.nozagleh.ormur.DrinkDetail">
+
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/detailsToolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        android:elevation="4dp"
+        android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
+        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
+
+    <ImageView
+        android:id="@+id/imgDrink"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:adjustViewBounds="true"
+        android:scaleType="fitCenter"
+        android:contentDescription="@string/txt_image_desc"
+        android:background="@color/colorLightBG"
+        android:src="@drawable/ic_insert_photo_white_24px"
+        app:layout_constraintTop_toBottomOf="@id/detailsToolbar" />
+
+    <TextView
+        android:id="@+id/txtImageAddHint"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/txt_change_image"
+        android:textSize="@dimen/text_size"
+        android:background="@drawable/bg_round_transparent"
+        app:layout_constraintTop_toTopOf="@id/imgDrink"
+        android:gravity="center"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/imgDrink" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/editButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="10dp"
+        app:backgroundTint="@color/colorAccent"
+        android:src="@drawable/ic_edit_white_24px"
+        android:layout_gravity="bottom|end"
+        android:layout_marginBottom="10dp"
+        app:layout_constraintBottom_toBottomOf="@id/imgDrink"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <RelativeLayout
+        android:id="@+id/textHolder"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="20dp"
+        app:layout_constraintTop_toBottomOf="@id/imgDrink">
+
+        <TextView
+            android:id="@+id/txtTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/text_heading_size"
+            android:textStyle="bold"
+            android:layout_marginBottom="20dp"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentStart="true"/>
+
+        <EditText
+            android:id="@+id/txtTitleEdit"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/text_heading_size"
+            android:inputType="textCapSentences|textNoSuggestions"
+            android:textStyle="bold"
+            android:layout_marginBottom="20dp"
+            android:layout_alignBaseline="@id/txtTitle"
+            android:hint="@string/txt_name"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentStart="true"/>
+
+        <RatingBar
+            android:id="@+id/ratingBar"
+            android:layout_below="@id/txtTitle"
+            android:numStars="5"
+            android:stepSize="0.5"
+            android:layout_marginBottom="20dp"
+            android:layout_alignParentStart="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <RatingBar
+            android:id="@+id/ratingBarEdit"
+            android:layout_marginBottom="20dp"
+            android:numStars="5"
+            android:stepSize="0.5"
+            android:layout_below="@id/txtTitleEdit"
+            android:layout_alignBaseline="@id/ratingBar"
+            android:layout_alignParentStart="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:id="@+id/txtDescription"
+            android:textSize="@dimen/text_size"
+            android:layout_marginBottom="20dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/ratingBar" />
+
+        <EditText
+            android:id="@+id/txtDescriptionEdit"
+            android:textSize="@dimen/text_size"
+            android:hint="@string/txt_description"
+            android:layout_alignBaseline="@id/txtDescription"
+            android:inputType="textMultiLine|textCapSentences"
+            android:layout_marginBottom="20dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/ratingBarEdit" />
+
+    </RelativeLayout>
+
+    <!--<com.google.android.gms.maps.MapView
+        android:id="@+id/mapDrink"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/textHolder">
+
+    </com.google.android.gms.maps.MapView>-->
+
+</android.support.constraint.ConstraintLayout>
