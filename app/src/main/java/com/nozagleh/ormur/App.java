@@ -170,12 +170,16 @@ public class App extends AppCompatActivity {
         mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                // Repopulate the drink list on refresh
-                reloadListData();
+                if (NetworkChecker.hasNetwork(Statics.appContext)) {
+                    // Repopulate the drink list on refresh
+                    reloadListData();
+                }
             }
         });
 
-        mSwipeRefreshLayout.setRefreshing(true);
+        if (NetworkChecker.hasNetwork(Statics.appContext)) {
+            mSwipeRefreshLayout.setRefreshing(true);
+        }
     }
 
     /**
@@ -207,7 +211,15 @@ public class App extends AppCompatActivity {
 
             @Override
             public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
+                final int pos = viewHolder.getAdapterPosition();
+                Drink drink = listOfDrinks.getDrink(pos);
 
+                FirebaseData.removeDrink(drink.getId());
+                Utils.deleteCachedImage(Statics.appContext, drink.getId() + ".jpeg");
+                Statics.localDb.offlineDrinkDao().delete(drink);
+
+                listOfDrinks.removeDrink(drink);
+                mAdapter.notifyItemRemoved(pos);
             }
         });
 
