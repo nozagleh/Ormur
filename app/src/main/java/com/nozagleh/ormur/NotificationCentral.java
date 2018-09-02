@@ -35,16 +35,16 @@ public class NotificationCentral {
      * @param intent string The intent to be run
      */
     private static void sendNotification(String title, String text, Intent intent) {
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        PendingIntent pendingIntent = PendingIntent.getActivity(Statics.appContext, 0, intent, 0);
-
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(Statics.appContext, APP_CHANNEL_ID)
-                .setSmallIcon(R.drawable.googleg_standard_color_18)
+                .setSmallIcon(R.drawable.ic_sync_icon)
                 .setContentTitle(title)
                 .setContentText(text)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT);
 
-        if (pendingIntent != null) {
+        if (intent != null) {
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            PendingIntent pendingIntent = PendingIntent.getActivity(Statics.appContext, 0, intent, 0);
+
             mBuilder.setAutoCancel(true)
                     .setContentIntent(pendingIntent);
         }
@@ -67,7 +67,8 @@ public class NotificationCentral {
             title = Statics.appContext.getString(R.string.notification_synced_singular, drinks.size());
         }
 
-        Drink drink = drinks.get(drinks.size());
+        /*Drink drink = drinks.get(drinks.size());
+
 
         Intent intent = new Intent(Statics.appContext, DrinkDetail.class);
         // Put all the drink details into the intent extras
@@ -82,12 +83,12 @@ public class NotificationCentral {
         if (drink.getImage() != null) {
             File file = Utils.cacheImage(Statics.appContext, drink.getId() + ".jpeg", drink.getImage());
             intent.putExtra("cachedImage", file.getName());
-        }
+        }*/
 
         sendNotification(
                 title,
                 Statics.appContext.getString(R.string.notification_synced_text),
-                intent);
+                null);
     }
 
     /**
