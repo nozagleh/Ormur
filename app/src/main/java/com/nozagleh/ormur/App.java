@@ -220,6 +220,8 @@ public class App extends AppCompatActivity {
 
                 listOfDrinks.removeDrink(drink);
                 mAdapter.notifyItemRemoved(pos);
+
+                Utils.showSnackBar(findViewById(R.id.appCoordinator), Statics.appContext.getString(R.string.drink_removed, drink.getTitle()));
             }
         });
 
