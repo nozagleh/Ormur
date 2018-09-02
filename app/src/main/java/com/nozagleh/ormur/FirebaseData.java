@@ -64,6 +64,8 @@ public class FirebaseData {
 
             // TODO cache drinks for syncing later, replace offline drink with just drink (include booleans for checking)
             Statics.localDb.offlineDrinkDao().insertSingle(drink);
+
+            return null;
         }
 
         String key;

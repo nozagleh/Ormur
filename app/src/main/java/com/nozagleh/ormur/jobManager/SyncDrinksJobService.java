@@ -43,12 +43,13 @@ public class SyncDrinksJobService extends JobService {
         for (Drink drink : drinks) {
             // Check if the current drink is synced or not
             if (!drink.getSynced()) {
+                drink.setSynced(true);
+
                 // Upload the drink
                 String key = FirebaseData.setDrink(drink, drink.getId());
 
                 if(key != null) {
                     // Set the drink to synced, but keep it in the database
-                    drink.setSynced(true);
                     Statics.localDb.offlineDrinkDao().updateSingle(drink);
 
                     // Add the drink to the updated drinks
