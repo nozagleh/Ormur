@@ -1,1 +1,14 @@
+google-services.json
+
+# Build
 /build
+build.gradle
+
+# Release
+/release
+
+# Idea
+.idea/modules.xml
+/idea/tasks.xml
+/idea/usage.statistics.xml
+/idea/workspace.xml
