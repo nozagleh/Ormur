@@ -70,7 +70,11 @@ public class DrinkList {
      * @return A single drink
      */
     public Drink getDrink(int pos) {
-        return drinkList.get(pos);
+        if (drinkList.size() >= pos) {
+            return drinkList.get(pos);
+        }
+
+        return null;
     }
 
     /**
