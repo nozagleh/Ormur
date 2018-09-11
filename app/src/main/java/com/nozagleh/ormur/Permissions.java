@@ -17,12 +17,12 @@ public class Permissions {
     /**
      * Permission key for the GPS fine location checker.
      */
-    private static final int PERMISSION_GPS = 42;
+    public static final int PERMISSION_GPS = 42;
 
     /**
      * Permission key for writing to storage.
      */
-    private static final int PERMISSION_WRITE = 34;
+    public static final int PERMISSION_WRITE = 34;
 
     /**
      * A general permission checker, checks for user permission for the current activity.
