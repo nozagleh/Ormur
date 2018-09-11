@@ -461,8 +461,16 @@ public class App extends AppCompatActivity {
         switch (requestCode) {
             case Permissions.PERMISSION_WRITE: {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // We don't need to do anything here now...
+                    // Granted
+                } else {
+                    // Not granted
                 }
+
+                if (FirebaseData.isListening()) {
+                    FirebaseData.stopListeningForDrinkChanges();
+                }
+
+                listenForDrinks();
             }
         }
     }
